@@ -1,5 +1,3 @@
-// App.js (Ejemplo en React)
-
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -9,7 +7,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
-  const API_URL = 'const API_URL = process.env.REACT_APP_API_URL'; // **¡IMPORTANTE! Cambia esto por la URL de tu servicio en Render**
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -18,7 +16,7 @@ function App() {
       setMessage(response.data.message);
       setResources(response.data.user);
     } catch (error) {
-      setMessage(error.response.data.message);
+      setMessage(error.response?.data?.message || 'Error al registrarse');
     }
   };
 
