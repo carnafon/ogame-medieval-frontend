@@ -7,7 +7,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const API_URL = 'https://592d2b5b-d06a-4b59-b4f0-c7b515017ade-00-1r1teifxrcm06.riker.replit.dev'; // **¡IMPORTANTE! CAMBIA ESTO**
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -16,7 +16,7 @@ function App() {
       setMessage(response.data.message);
       setResources(response.data.user);
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error al registrarse');
+      setMessage(error.response.data.message);
     }
   };
 
