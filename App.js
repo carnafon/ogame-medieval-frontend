@@ -9,7 +9,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
-  const API_URL = 'https://tu-backend.onrender.com'; // **¡IMPORTANTE! Cambia esto por la URL de tu servicio en Render**
+  const API_URL = 'const API_URL = process.env.REACT_APP_API_URL'; // **¡IMPORTANTE! Cambia esto por la URL de tu servicio en Render**
 
   const handleRegister = async (e) => {
     e.preventDefault();
