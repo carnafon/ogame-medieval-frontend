@@ -177,7 +177,7 @@ function App() {
                 Authorization: `Bearer ${storedToken}`
             }
         });
-        Console.WriteLine("-Paso1"); 
+        console.log("-Paso1"); 
         setResources(response.data.user);
         setBuildings(response.data.buildings); 
         setPopulation(response.data.population);
@@ -186,7 +186,7 @@ function App() {
     } catch (error) {
         const errorMessage = error.response ? error.response.data.message : 'Error de construcción.';
         setMessage(`Error: ${errorMessage}`);
-         Console.WriteLine("-PasoError"); 
+         console.log("-PasoError"); 
     }
   };
 
