@@ -35,7 +35,7 @@ const BUILDING_COSTS_FRONTEND = {
         name: 'Granja',
         wood: 40,
         stone: 10,
-        food: 10,
+        food: 0,
         description: 'Produce Comida (+10) cada 10 segundos.'
     // Aquí puedes añadir más edificios
     },
