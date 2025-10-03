@@ -16,6 +16,21 @@ const BUILDING_COSTS_FRONTEND = {
         food: 5,
         description: 'Aumenta el límite de población y la moral.' 
     },
+      'sawmill': {
+        name: 'Aserradero',
+        wood: 50,
+        stone: 30,
+        food: 10,
+        description: 'Produce Madera (+5) consumiendo Comida (-1) cada 10 segundos.'
+    },
+    // ⭐️ NUEVO: CANTERA AÑADIDA
+    'quarry': {
+        name: 'Cantera',
+        wood: 40,
+        stone: 80,
+        food: 15,
+        description: 'Produce Piedra (+8) consumiendo Comida (-2) cada 10 segundos.'
+    },
     // Aquí puedes añadir más edificios
 };
 
