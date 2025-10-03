@@ -22,7 +22,7 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = process.env.REACT_APP_API_URL; 
+  const API_URL = process.env.REACT_APP_API_URL; // Asegúrate de definir esta variable en tu .env
 
   // Función para obtener todos los datos del usuario (recursos y edificios)
   const fetchUserData = async (token) => {
