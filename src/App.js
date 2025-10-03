@@ -7,6 +7,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
+  // Obtén la URL del API desde la variable de entorno
   const API_URL = process.env.REACT_APP_API_URL; 
 
   const handleRegister = async (e) => {
