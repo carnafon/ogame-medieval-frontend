@@ -10,7 +10,7 @@ const BUILDING_COSTS_FRONTEND = {
         food: 5,
         description: 'Aumenta el límite de población y la moral.' 
     },
-    // Añade más edificios aquí según los definas en el backend
+    // Aquí puedes añadir más edificios
 };
 
 function App() {
@@ -19,50 +19,52 @@ function App() {
   const [message, setMessage] = useState('Inicia sesión o regístrate.');
   const [resources, setResources] = useState(null);
   const [buildings, setBuildings] = useState([]); 
-  const [isRegistering, setIsRegistering] = useState(false); // Por defecto, login
+  const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const API_URL = process.env.REACT_APP_API_URL; 
 
-  // Función para obtener todos los datos del usuario (Recursos y Edificios)
-  // Definida internamente para ser usada en useEffect, lo cual es la mejor práctica.
-  const checkSession = async (storedToken) => {
-    if (storedToken) {
-        try {
-            // Envía el token al backend para validación
-            const response = await axios.get(`${API_URL}/api/me`, {
-                headers: {
-                    Authorization: `Bearer ${storedToken}`
-                }
-            });
-            
-            // Si el backend responde 200, la sesión es válida y cargamos los datos
-            setResources(response.data.user);
-            // NOTA: Necesitas actualizar la ruta /api/me en el backend para que devuelva
-            // la lista de edificios del usuario. Por ahora, asumiremos que está vacía
-            // hasta que integremos esa lógica.
-            // setBuildings(response.data.buildings || []); 
-            setMessage(response.data.message);
-            
-        } catch (error) {
-            // Token no válido (401 o 403)
-            localStorage.removeItem('authToken');
-            setResources(null);
-            setMessage('Sesión expirada o inválida. Inicia sesión.');
-        }
+  // Función para realizar el fetch de datos del usuario
+  // Esta función DEBE ser definida fuera del useEffect
+  const fetchUserData = async (token) => {
+    try {
+        const response = await axios.get(`${API_URL}/api/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Actualiza estados con los datos del usuario
+        setResources(response.data.user);
+        // PENDIENTE: Actualizar el backend para que devuelva la lista de edificios
+        // setBuildings(response.data.buildings || []); 
+        setMessage(response.data.message);
+        return true;
+    } catch (error) {
+        localStorage.removeItem('authToken');
+        setResources(null);
+        setMessage('Sesión expirada o inválida. Inicia sesión.');
+        return false;
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false); // Finaliza la carga inicial
   };
 
-  // ⭐️ CORRECCIÓN DEL ERROR DE NETLIFY: Se llama a la función dentro del useEffect.
+  // ⭐️ CORRECCIÓN DEL ERROR DE NETLIFY: Usamos useCallback o, más simple, 
+  // incluimos la función en el useEffect (y el hook pide sus dependencias)
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
-    // Para resolver el error de eslint, definimos esta función auxiliar dentro
-    // del useEffect para que no necesitemos incluirla en el array de dependencias.
-    const runCheck = () => checkSession(storedToken);
 
-    runCheck();
-  }, [API_URL]); // Solo API_URL es una dependencia externa que no es de estado/prop
+    // Definimos la función de comprobación DENTRO del hook para que sepa qué dependencias necesita.
+    // Esto resuelve el error de ESLint de forma limpia.
+    const checkSessionAndLoad = async () => {
+        if (storedToken) {
+            await fetchUserData(storedToken);
+        } else {
+            setIsLoading(false);
+        }
+    };
+
+    checkSessionAndLoad();
+  }, [API_URL]); // Ahora el hook solo depende de API_URL
 
   // Manejador de Login/Registro
   const handleAuth = async (e) => {
@@ -73,17 +75,15 @@ function App() {
     try {
       const response = await axios.post(`${API_URL}/api/${endpoint}`, { username, password });
       
-      // Guarda el nuevo token JWT y actualiza el estado
       const token = response.data.token;
       localStorage.setItem('authToken', token); 
       
       setMessage(response.data.message);
-      setResources(response.data.user);
       setUsername('');
       setPassword('');
       
-      // Llama a checkSession para cargar los datos completos tras el login/registro
-      checkSession(token); 
+      // Tras el login/registro, cargamos los datos
+      await fetchUserData(token); 
 
     } catch (error) {
       const errorMessage = error.response ? error.response.data.message : 'Error de conexión con el servidor.';
@@ -106,7 +106,6 @@ function App() {
             }
         });
         
-        // Actualizar el estado con los recursos y edificios devueltos por el backend
         setResources(response.data.user);
         setBuildings(response.data.buildings); 
         setMessage(response.data.message);
