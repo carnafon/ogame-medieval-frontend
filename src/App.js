@@ -31,7 +31,14 @@ const BUILDING_COSTS_FRONTEND = {
         food: 15,
         description: 'Produce Piedra (+8) consumiendo Comida (-2) cada 10 segundos.'
     },
+    'farm': {
+        name: 'Granja',
+        wood: 40,
+        stone: 10,
+        food: 10,
+        description: 'Produce Comida (+10) cada 10 segundos.'
     // Aquí puedes añadir más edificios
+    },
 };
 
 function App() {
