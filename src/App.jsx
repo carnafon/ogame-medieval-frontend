@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    Home, Factory, Users, Soup, Mountain, Axe, RefreshCw, Loader, LogIn, UserPlus 
+    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus 
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN FRONTAL ---
@@ -119,8 +119,8 @@ function App() {
 
     // --- LÓGICA DE GENERACIÓN DE RECURSOS (Game Loop) ---
     
-    // Función para generar recursos (usada por el intervalo)
-    const generateResources = async (token) => {
+    // Función para generar recursos (usada por el intervalo) - ENVUELTA EN useCallback
+    const generateResources = useCallback(async (token) => {
         try {
             const response = await fetch(`${API_BASE_URL}/generate-resources`, {
                 method: 'POST',
@@ -155,7 +155,8 @@ function App() {
             }
             return false;
         }
-    };
+    }, [getAuthHeaders]); // Dependencia de getAuthHeaders
+
     
     // Efecto 2: Generación periódica de recursos
     useEffect(() => {
@@ -181,8 +182,8 @@ function App() {
             // Función de limpieza
             return () => clearInterval(timer);
         }
-    // El intervalo se reinicia si 'user' cambia (ej: login/logout)
-    }, [user, getAuthHeaders]); 
+    // El intervalo se reinicia si 'user' cambia o 'generateResources' cambia (aunque es estable por useCallback)
+    }, [user, generateResources]); 
 
     // --- MANEJADORES DE ACCIONES ---
 
