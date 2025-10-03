@@ -4,47 +4,51 @@ import axios from 'axios';
 function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('Inicia sesión o regístrate.');
   const [resources, setResources] = useState(null);
-  const [isRegistering, setIsRegistering] = useState(true);
-  const [isLoading, setIsLoading] = useState(true); // Nuevo estado para la carga inicial
+  const [isRegistering, setIsRegistering] = useState(false); // Por defecto, mostrar Login
+  const [isLoading, setIsLoading] = useState(true); // Bloquea la UI hasta revisar la sesión
 
   const API_URL = process.env.REACT_APP_API_URL; 
 
-  // 1. Efecto para cargar la sesión al inicio (al montar el componente)
+  // Función para reanudar la sesión al cargar (F5)
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    if (storedToken) {
-      // NOTA: Para un MVP, cargamos el recurso de la base de datos simulando una sesión activa
-      // En un entorno real, tendrías una ruta '/api/me' que valida el token y devuelve el usuario
-      setMessage('Sesión reanudada. ¡Bienvenido!');
-      // Por simplicidad, recargaremos el primer usuario de la DB (se reemplazará en el futuro)
-      loadInitialUser(); 
-    } else {
-      setIsLoading(false); // No hay token, mostrar formularios
-    }
-  }, []);
+    const checkSession = async () => {
+        const storedToken = localStorage.getItem('authToken');
 
-  // Función temporal para simular la carga de sesión
-  const loadInitialUser = async () => {
-      // Aquí el token ya está en localStorage, pero aún no tenemos una ruta de validación.
-      // Por ahora, para el MVP, simplemente asumiremos que el primer usuario es el logueado 
-      // y cargaremos su data (ESTO SE MEJORA EN LA SIGUIENTE FASE).
-      // Aquí estamos forzando un 'login' para cargar data
-      // setResources({ username: 'usuario_temporal', wood: 10, stone: 10, food: 10 }); 
-      // Si la carga de sesión fuera real (con una ruta /api/me), se cargaría la data de la respuesta.
-      setIsLoading(false);
-  };
+        if (storedToken) {
+            try {
+                // Envía el token al backend para validación
+                const response = await axios.get(`${API_URL}/api/me`, {
+                    headers: {
+                        // Formato estándar para enviar el token
+                        Authorization: `Bearer ${storedToken}`
+                    }
+                });
+                
+                // Si el backend responde 200, la sesión es válida
+                setResources(response.data.user);
+                setMessage(response.data.message);
+                
+            } catch (error) {
+                // Token no válido (401 o 403), lo borramos y forzamos el login
+                localStorage.removeItem('authToken');
+                setMessage('Sesión expirada o inválida. Inicia sesión.');
+            }
+        }
+        setIsLoading(false); // La carga inicial ha terminado, muestra la UI
+    };
+    checkSession();
+  }, [API_URL]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = isRegistering ? 'register' : 'login';
-    setMessage('');
     
     try {
       const response = await axios.post(`${API_URL}/api/${endpoint}`, { username, password });
       
-      // 2. Guardar el token de autenticación
+      // Guarda el nuevo token JWT
       localStorage.setItem('authToken', response.data.token); 
       
       setMessage(response.data.message);
@@ -60,7 +64,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     setResources(null);
-    setIsRegistering(false); // Vuelve a la vista de login
+    setIsRegistering(false); 
     setMessage('Has cerrado sesión.');
   };
 
@@ -73,11 +77,13 @@ function App() {
       <h1>Juego de Comercio Medieval</h1>
       
       {resources ? (
-        // Estado de USUARIO LOGUEADO: Muestra Recursos y Botón de Logout
+        // USUARIO LOGUEADO: Muestra Recursos
         <div>
           <h2>Bienvenido, {resources.username}</h2>
           <button onClick={handleLogout} style={{ float: 'right' }}>Cerrar Sesión</button>
+          {/* Muestra los recursos */}
           <h3>Tus Recursos:</h3>
+          {/* ... (código de listado de recursos) ... */}
           <ul>
             <li>Madera: {resources.wood}</li>
             <li>Piedra: {resources.stone}</li>
@@ -86,18 +92,13 @@ function App() {
           <p>Tus recursos aumentan automáticamente cada minuto.</p>
         </div>
       ) : (
-        // Estado de NO LOGUEADO: Muestra Formulario de Autenticación
+        // NO LOGUEADO: Formulario simplificado
         <div>
           <button 
-            onClick={() => setIsRegistering(true)} 
-            disabled={isRegistering}
-            style={{ marginRight: '10px' }}>
-            Registrarse
-          </button>
-          <button 
-            onClick={() => setIsRegistering(false)} 
-            disabled={!isRegistering}>
-            Iniciar Sesión
+            onClick={() => setIsRegistering(!isRegistering)} 
+            style={{ marginBottom: '20px' }}>
+            {/* Botón que conmuta entre Registro y Login */}
+            {isRegistering ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
           </button>
           
           <form onSubmit={handleAuth}>
@@ -119,7 +120,7 @@ function App() {
               style={{ display: 'block', margin: '10px 0' }}
             />
             <button type="submit">
-              {/* Texto de botón simple */}
+              {/* Texto de botón simple, no redundante */}
               {isRegistering ? 'Crear Cuenta' : 'Acceder'}
             </button>
             <p style={{ color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>
