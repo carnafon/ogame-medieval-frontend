@@ -7,7 +7,10 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
+<<<<<<< HEAD
   // ¡CRUCIAL! Obtiene la URL del backend de la variable de entorno de Netlify/despliegue
+=======
+>>>>>>> a14f898ea1b50461ad64af8a5af95b02f48a1beb
   const API_URL = process.env.REACT_APP_API_URL; 
 
   const handleRegister = async (e) => {
