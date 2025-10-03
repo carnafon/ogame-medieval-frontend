@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 // Definir los costes y detalles de construcción en el frontend
@@ -25,8 +25,8 @@ function App() {
   const API_URL = process.env.REACT_APP_API_URL; 
 
   // Función para realizar el fetch de datos del usuario
-  // Esta función DEBE ser definida fuera del useEffect
-  const fetchUserData = async (token) => {
+  // ⭐️ CORRECCIÓN: Usamos useCallback para que la función sea estable
+  const fetchUserData = useCallback(async (token) => {
     try {
         const response = await axios.get(`${API_URL}/api/me`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -46,15 +46,13 @@ function App() {
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [API_URL, setResources, setMessage, setIsLoading]); // Dependencias de useCallback
 
-  // ⭐️ CORRECCIÓN DEL ERROR DE NETLIFY: Usamos useCallback o, más simple, 
-  // incluimos la función en el useEffect (y el hook pide sus dependencias)
+  // ⭐️ CORRECCIÓN DEL ERROR DE NETLIFY: Ahora fetchUserData es estable y se incluye aquí
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
 
-    // Definimos la función de comprobación DENTRO del hook para que sepa qué dependencias necesita.
-    // Esto resuelve el error de ESLint de forma limpia.
+    // La función interna es simple y solo llama a la función estable
     const checkSessionAndLoad = async () => {
         if (storedToken) {
             await fetchUserData(storedToken);
@@ -64,7 +62,7 @@ function App() {
     };
 
     checkSessionAndLoad();
-  }, [API_URL]); // Ahora el hook solo depende de API_URL
+  }, [fetchUserData, setIsLoading]); // Depende de fetchUserData (estable) y setIsLoading (estable)
 
   // Manejador de Login/Registro
   const handleAuth = async (e) => {
