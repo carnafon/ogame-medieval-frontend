@@ -3,16 +3,11 @@ import {
     Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus 
 } from 'lucide-react';
 
-// --- CONFIGURACIÓN FRONTAL ---
-
-// URL base de tu backend desplegado en Render (Actualizada)
+// --- CONFIGURACIÓN GLOBAL ---
 const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
+const GENERATION_INTERVAL_MS = 10000; // 10 segundos
 
-// Intervalo de tiempo para la generación de recursos (en milisegundos)
-// 10000 ms = 10 segundos
-const GENERATION_INTERVAL_MS = 10000; 
-
-// Definiciones de Edificios (adaptadas del código que proporcionaste)
+// Definiciones de Edificios (Necesarias tanto para la lógica de costo como para la UI)
 const BUILDING_DEFINITIONS = {
     'house': { 
         name: 'Casa Simple', 
@@ -40,35 +35,32 @@ const BUILDING_DEFINITIONS = {
     },
 };
 
-function App() {
-    // Estado de la Aplicación
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    // 'user' almacena todos los recursos y datos del usuario (wood, stone, etc.)
+// =========================================================================
+// CUSTOM HOOK: useGameData (Lógica de la Aplicación)
+// Contiene todos los estados, fetchers y efectos.
+// =========================================================================
+
+const useGameData = () => {
+    // --- ESTADO DE LA APLICACIÓN ---
     const [user, setUser] = useState(null); 
     const [buildings, setBuildings] = useState([]); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
     
-    // Estado de UI
-    const [isRegistering, setIsRegistering] = useState(false);
+    // --- ESTADO DE UI / MENSAJES ---
     const [isLoading, setIsLoading] = useState(true);
     const [uiMessage, setUIMessage] = useState({ text: 'Inicia sesión o regístrate.', type: 'info' });
 
-    // --- Funciones de Utilidad ---
-
-    const displayMessage = (text, type = 'info') => {
-        setUIMessage({ text, type });
-        // Opcional: limpiar el mensaje después de un tiempo
-        // setTimeout(() => setUIMessage({ text: '', type: 'info' }), 5000); 
-    };
-    
     // Función para manejar las cabeceras de la API
     const getAuthHeaders = useCallback((token) => ({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
     }), []);
 
-    // --- LÓGICA DE SESIÓN (ESTABLE CON useCallback) ---
+    const displayMessage = useCallback((text, type = 'info') => {
+        setUIMessage({ text, type });
+    }, []);
+
+    // --- LÓGICA CORE ---
 
     // 1. Cargar datos del usuario
     const fetchUserData = useCallback(async (token) => {
@@ -80,14 +72,12 @@ function App() {
             });
 
             if (!response.ok) {
-                // Si la respuesta no es OK (ej. 401), se lanza un error
                 const errData = await response.json();
                 throw new Error(errData.message || 'Fallo al cargar datos.');
             }
             
             const data = await response.json();
             
-            // Actualiza estados con los datos del usuario
             setUser(data.user);
             setBuildings(data.buildings || []); 
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
@@ -102,24 +92,9 @@ function App() {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders]);
+    }, [getAuthHeaders, displayMessage]);
 
-    // Efecto 1: Comprobación de sesión al inicio
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        const checkSessionAndLoad = async () => {
-            if (storedToken) {
-                await fetchUserData(storedToken);
-            } else {
-                setIsLoading(false);
-            }
-        };
-        checkSessionAndLoad();
-    }, [fetchUserData]); 
-
-    // --- LÓGICA DE GENERACIÓN DE RECURSOS (Game Loop) ---
-    
-    // Función para generar recursos (usada por el intervalo) - ENVUELTA EN useCallback
+    // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
         try {
             const response = await fetch(`${API_BASE_URL}/generate-resources`, {
@@ -129,7 +104,6 @@ function App() {
 
             if (!response.ok) {
                 const errData = await response.json();
-                // Si el backend devuelve un error (ej: falta de comida), mostrarlo, pero no desloguear
                 if (response.status !== 401) { 
                     displayMessage(errData.message || 'Error en la producción.', 'warning');
                     return false;
@@ -140,11 +114,9 @@ function App() {
             const data = await response.json();
             setUser(data.user);
             setPopulation(data.population);
-            // displayMessage(data.message || 'Recursos actualizados.', 'success'); 
             return true;
 
         } catch (error) {
-            // Manejar error 401: Sesión expirada
             if (error.message.includes('Token inválido')) {
                 localStorage.removeItem('authToken');
                 setUser(null);
@@ -155,41 +127,12 @@ function App() {
             }
             return false;
         }
-    }, [getAuthHeaders]); // Dependencia de getAuthHeaders
-
-    
-    // Efecto 2: Generación periódica de recursos
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        
-        // Solo inicia el intervalo si hay un token
-        if (user && storedToken) {
-            let timer;
-            
-            const startInterval = () => {
-                timer = setInterval(async () => {
-                    const success = await generateResources(storedToken);
-                    if (!success) {
-                        // Si el error fue un 401, generateResources ya limpió el token. 
-                        // Detener el intervalo.
-                        clearInterval(timer); 
-                    }
-                }, GENERATION_INTERVAL_MS);
-            };
-
-            startInterval(); // Llama inmediatamente al inicio si estás logueado
-            
-            // Función de limpieza
-            return () => clearInterval(timer);
-        }
-    // El intervalo se reinicia si 'user' cambia o 'generateResources' cambia (aunque es estable por useCallback)
-    }, [user, generateResources]); 
+    }, [getAuthHeaders, displayMessage]);
 
     // --- MANEJADORES DE ACCIONES ---
 
     // Manejador de Login/Registro
-    const handleAuth = async (e) => {
-        e.preventDefault();
+    const handleAuth = useCallback(async (username, password, isRegistering) => {
         const endpoint = isRegistering ? 'register' : 'login';
         displayMessage('Conectando...', 'info');
         
@@ -209,11 +152,6 @@ function App() {
             const token = data.token;
             localStorage.setItem('authToken', token); 
             
-            // Limpiar formulario
-            setUsername('');
-            setPassword('');
-            
-            // Tras el login/registro, cargamos los datos
             await fetchUserData(token); 
             displayMessage(data.message || 'Autenticación exitosa.', 'success');
 
@@ -223,10 +161,10 @@ function App() {
                 : error.message;
             displayMessage(`Error: ${errorMessage}`, 'error');
         }
-    };
+    }, [fetchUserData, displayMessage]);
 
     // Manejador para la construcción
-    const handleBuild = async (buildingType) => {
+    const handleBuild = useCallback(async (buildingType) => {
         const storedToken = localStorage.getItem('authToken');
         if (!storedToken) {
             displayMessage('Debes iniciar sesión para construir.', 'error');
@@ -250,7 +188,6 @@ function App() {
             
             const data = await response.json();
             
-            // Actualizar estados
             setUser(data.user);
             setBuildings(data.buildings); 
             setPopulation(data.population);
@@ -261,24 +198,119 @@ function App() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [getAuthHeaders, displayMessage]);
 
-    const handleLogout = () => {
+
+    const handleLogout = useCallback(() => {
         localStorage.removeItem('authToken');
         setUser(null);
         setBuildings([]);
-        setIsRegistering(false); 
         displayMessage('Has cerrado sesión.', 'info');
-    };
+    }, [displayMessage]);
+
+
+    // --- EFECTOS (Game Loop y Carga Inicial) ---
+
+    // Efecto 1: Comprobación de sesión al inicio
+    useEffect(() => {
+        const storedToken = localStorage.getItem('authToken');
+        const checkSessionAndLoad = async () => {
+            if (storedToken) {
+                await fetchUserData(storedToken);
+            } else {
+                setIsLoading(false);
+            }
+        };
+        checkSessionAndLoad();
+    }, [fetchUserData]); 
+
+    // Efecto 2: Generación periódica de recursos
+    useEffect(() => {
+        const storedToken = localStorage.getItem('authToken');
+        
+        if (user && storedToken) {
+            let timer;
+            
+            const startInterval = () => {
+                timer = setInterval(async () => {
+                    const success = await generateResources(storedToken);
+                    if (!success) {
+                        clearInterval(timer); 
+                    }
+                }, GENERATION_INTERVAL_MS);
+            };
+
+            startInterval(); 
+            
+            return () => clearInterval(timer);
+        }
+    }, [user, generateResources]); 
 
     // Comprueba si el usuario tiene suficientes recursos
-    const canBuild = (cost) => {
+    const canBuild = useCallback((cost) => {
         if (!user) return false;
         return user.wood >= cost.wood && 
                user.stone >= cost.stone && 
                user.food >= cost.food;
-    };
+    }, [user]);
 
+    // Exportar el estado y las funciones
+    return {
+        user,
+        buildings,
+        population,
+        isLoading,
+        uiMessage,
+        canBuild,
+        handleAuth,
+        handleBuild,
+        handleLogout,
+    };
+};
+
+// =========================================================================
+// COMPONENTES DE PRESENTACIÓN (UI)
+// Se encargan únicamente de renderizar.
+// =========================================================================
+
+const ResourceDisplay = ({ icon: Icon, value, label, color }) => (
+    <div className="flex flex-col items-center p-3 bg-gray-700/50 rounded-lg shadow-inner w-full sm:w-1/4">
+        <Icon className={`w-6 h-6 ${color}`} />
+        <div className="text-xl font-bold mt-1 text-white">{value}</div>
+        <div className="text-xs text-gray-400">{label}</div>
+    </div>
+);
+
+const Card = ({ title, children, icon: Icon }) => (
+    <div className="bg-gray-800 p-6 rounded-xl shadow-2xl transition-all duration-300 hover:shadow-cyan-500/30 min-h-[400px]">
+        <h2 className="text-2xl font-extrabold text-cyan-400 mb-4 border-b border-gray-600 pb-2 flex items-center">
+            {Icon && <Icon className="w-6 h-6 mr-2" />}
+            {title}
+        </h2>
+        <div className="space-y-4">
+            {children}
+        </div>
+    </div>
+);
+
+// --- Componente Principal de UI ---
+
+const GameUI = ({ 
+    user, buildings, population, isLoading, uiMessage, canBuild, 
+    handleAuth, handleLogout, handleBuild 
+}) => {
+    // Estado local para el formulario de Auth 
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    // Manejador del formulario que llama al handleAuth del hook
+    const submitAuth = (e) => {
+        e.preventDefault();
+        handleAuth(username, password, isRegistering);
+        setUsername('');
+        setPassword('');
+    };
 
     if (isLoading && !user) {
         return (
@@ -288,30 +320,6 @@ function App() {
             </div>
         );
     }
-
-    // --- Componentes de UI ---
-
-    const ResourceDisplay = ({ icon: Icon, value, label, color }) => (
-        <div className="flex flex-col items-center p-3 bg-gray-700/50 rounded-lg shadow-inner w-full sm:w-1/4">
-            <Icon className={`w-6 h-6 ${color}`} />
-            <div className="text-xl font-bold mt-1 text-white">{value}</div>
-            <div className="text-xs text-gray-400">{label}</div>
-        </div>
-    );
-    
-    const Card = ({ title, children, icon: Icon }) => (
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl transition-all duration-300 hover:shadow-cyan-500/30">
-            <h2 className="text-2xl font-extrabold text-cyan-400 mb-4 border-b border-gray-600 pb-2 flex items-center">
-                {Icon && <Icon className="w-6 h-6 mr-2" />}
-                {title}
-            </h2>
-            <div className="space-y-4">
-                {children}
-            </div>
-        </div>
-    );
-
-    // --- RENDERIZADO ---
     
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8">
@@ -442,7 +450,7 @@ function App() {
                         </button>
                     </div>
                     
-                    <form onSubmit={handleAuth} className="space-y-4">
+                    <form onSubmit={submitAuth} className="space-y-4">
                         <input
                             type="text"
                             placeholder="Usuario"
@@ -476,6 +484,21 @@ function App() {
                 <p>Juego de Comercio Medieval desarrollado con React y Tailwind CSS.</p>
             </footer>
         </div>
+    );
+};
+
+
+// =========================================================================
+// COMPONENTE PRINCIPAL (Orquestador)
+// =========================================================================
+
+function App() {
+    // 1. Obtiene todo el estado y funciones del custom hook
+    const gameData = useGameData();
+
+    // 2. Renderiza el componente de UI, pasándole todos los datos
+    return (
+        <GameUI {...gameData} />
     );
 }
 
