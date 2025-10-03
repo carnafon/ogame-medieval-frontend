@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
+// --- CONFIGURACIÓN FRONTAL ---
+
+// Intervalo de tiempo para la generación de recursos (en milisegundos)
+// 10000 ms = 10 segundos
+const GENERATION_INTERVAL_MS = 10000; 
+
 // Definir los costes y detalles de construcción en el frontend
 const BUILDING_COSTS_FRONTEND = {
     'house': { 
@@ -24,8 +30,9 @@ function App() {
 
   const API_URL = process.env.REACT_APP_API_URL; 
 
+  // --- LÓGICA DE SESIÓN (ESTABLE CON useCallback) ---
+
   // Función para realizar el fetch de datos del usuario
-  // ⭐️ CORRECCIÓN: Usamos useCallback para que la función sea estable
   const fetchUserData = useCallback(async (token) => {
     try {
         const response = await axios.get(`${API_URL}/api/me`, {
@@ -48,11 +55,10 @@ function App() {
     }
   }, [API_URL, setResources, setMessage, setIsLoading]); // Dependencias de useCallback
 
-  // ⭐️ CORRECCIÓN DEL ERROR DE NETLIFY: Ahora fetchUserData es estable y se incluye aquí
+  // Efecto 1: Comprobación de sesión al inicio
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
 
-    // La función interna es simple y solo llama a la función estable
     const checkSessionAndLoad = async () => {
         if (storedToken) {
             await fetchUserData(storedToken);
@@ -62,7 +68,57 @@ function App() {
     };
 
     checkSessionAndLoad();
-  }, [fetchUserData, setIsLoading]); // Depende de fetchUserData (estable) y setIsLoading (estable)
+  }, [fetchUserData, setIsLoading]); 
+  
+  // --- LÓGICA DE GENERACIÓN DE RECURSOS ---
+  
+  // Efecto 2: Generación periódica de recursos
+  useEffect(() => {
+    // Solo inicia el intervalo si el usuario está logueado (resources no es null)
+    if (resources && localStorage.getItem('authToken')) {
+        
+        const intervalId = setInterval(async () => {
+            const storedToken = localStorage.getItem('authToken');
+            if (!storedToken) {
+                // Si el token desaparece, detener el intervalo inmediatamente.
+                clearInterval(intervalId);
+                return;
+            }
+
+            try {
+                // Llama al endpoint de generación de recursos
+                const response = await axios.post(`${API_URL}/api/generate-resources`, {}, {
+                    headers: {
+                        Authorization: `Bearer ${storedToken}`
+                    }
+                });
+                
+                // Actualizar los recursos con los nuevos valores del backend
+                setResources(response.data.user);
+                
+                // Opcional: mostrar un mensaje de que los recursos se actualizaron
+                // setMessage(response.data.message || 'Recursos actualizados.'); 
+
+            } catch (error) {
+                // Error 401 (token inválido/expirado)
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    setResources(null);
+                    setMessage('Sesión expirada. Inicia sesión de nuevo.');
+                } else {
+                    console.error("Error al generar recursos:", error);
+                    setMessage('Error en la conexión o generación de recursos.');
+                }
+                clearInterval(intervalId); // Detener el intervalo tras un error serio
+            }
+        }, GENERATION_INTERVAL_MS);
+
+        // Función de limpieza: se ejecuta al desmontar el componente o si 'resources' cambia (ej: logout)
+        return () => clearInterval(intervalId);
+    }
+  }, [resources, API_URL, setResources, setMessage]); // Se reinicia si el usuario se loguea/desloguea
+
+  // --- MANEJADORES DE ACCIONES ---
 
   // Manejador de Login/Registro
   const handleAuth = async (e) => {
@@ -135,6 +191,8 @@ function App() {
     return <div style={{ padding: '20px' }}>Cargando sesión...</div>;
   }
 
+  // --- RENDERIZADO ---
+  
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1>Juego de Comercio Medieval</h1>
