@@ -7,7 +7,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
-  const API_URL = 'https://tu-backend.replit.com'; // **¡IMPORTANTE! CAMBIA ESTO**
+  const API_URL = process.env.REACT_APP_API_URL; 
 
   const handleRegister = async (e) => {
     e.preventDefault();
