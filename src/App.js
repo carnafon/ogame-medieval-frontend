@@ -7,16 +7,24 @@ function App() {
   const [message, setMessage] = useState('');
   const [resources, setResources] = useState(null);
 
-  const API_URL = 'https://tu-backend.replit.com'; // **¡IMPORTANTE! CAMBIA ESTO**
+  // ¡CRUCIAL! Obtiene la URL del backend de la variable de entorno de Netlify/despliegue
+  const API_URL = process.env.REACT_APP_API_URL; 
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!API_URL) {
+      setMessage('Error: La URL del API no está configurada. ¿Estás en el entorno de producción?');
+      return;
+    }
+    
     try {
+      // Envía la petición a la URL obtenida de la variable de entorno
       const response = await axios.post(`${API_URL}/api/register`, { username, password });
       setMessage(response.data.message);
       setResources(response.data.user);
     } catch (error) {
-      setMessage(error.response.data.message);
+      const errorMessage = error.response ? error.response.data.message : 'Error de conexión con el servidor.';
+      setMessage(errorMessage);
     }
   };
 
@@ -43,7 +51,7 @@ function App() {
             style={{ display: 'block', margin: '10px 0' }}
           />
           <button type="submit">Registrarse</button>
-          <p>{message}</p>
+          <p style={{ color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>
         </form>
       ) : (
         <div>
