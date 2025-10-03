@@ -40,6 +40,7 @@ function App() {
   const [message, setMessage] = useState('Inicia sesión o regístrate.');
   const [resources, setResources] = useState(null);
   const [buildings, setBuildings] = useState([]); 
+  const [population, setPopulation] = useState({ current_population: 0, max_population: 0 });
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,7 +58,8 @@ function App() {
         // Actualiza estados con los datos del usuario
         setResources(response.data.user);
         // PENDIENTE: Actualizar el backend para que devuelva la lista de edificios
-        // setBuildings(response.data.buildings || []); 
+        setBuildings(response.data.buildings || []); 
+        setPopulation(response.data.population || { current_population: 0, max_population: 0 });
         setMessage(response.data.message);
         return true;
     } catch (error) {
@@ -110,6 +112,7 @@ function App() {
                 
                 // Actualizar los recursos con los nuevos valores del backend
                 setResources(response.data.user);
+                setPopulation(response.data.population);
                 
                 // Opcional: mostrar un mensaje de que los recursos se actualizaron
                 // setMessage(response.data.message || 'Recursos actualizados.'); 
@@ -177,6 +180,7 @@ function App() {
         
         setResources(response.data.user);
         setBuildings(response.data.buildings); 
+        setPopulation(response.data.population);
         setMessage(response.data.message);
 
     } catch (error) {
@@ -218,12 +222,13 @@ function App() {
           <h2>Bienvenido, {resources.username}</h2>
           <button onClick={handleLogout} style={{ float: 'right' }}>Cerrar Sesión</button>
           
-          {/* SECCIÓN DE RECURSOS */}
+          {/* SECCIÓN DE RECURSOS Y POBLACION*/}
           <h3>💰 Tus Recursos:</h3>
           <ul>
             <li>**Madera:** {resources.wood}</li>
             <li>**Piedra:** {resources.stone}</li>
-            <li>**Comida:** {resources.food}</li>
+            <li>🍎 Comida:** {resources.food}</li>
+            <li>👥 Población: {population.current_population} / {population.max_population}</li>
           </ul>
           <p style={{ color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>
           
