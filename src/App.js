@@ -134,7 +134,7 @@ function App() {
         // Función de limpieza: se ejecuta al desmontar el componente o si 'resources' cambia (ej: logout)
         return () => clearInterval(intervalId);
     }
-  }, [resources, API_URL, setResources, setMessage]); // Se reinicia si el usuario se loguea/desloguea
+  }, [resources, API_URL, setResources,setPopulation, setMessage]); // Se reinicia si el usuario se loguea/desloguea
 
   // --- MANEJADORES DE ACCIONES ---
 
