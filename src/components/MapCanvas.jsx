@@ -27,7 +27,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         ctx.lineTo(gridSize * cellSize * scale + offset.x, y * cellSize * scale + offset.y);
         ctx.stroke();
       }
-      console.log("jugador", players[0].id);
+      console.log("jugador", players);
       // Dibujar jugadores
       (players || []).forEach((p) => {
         if (!p) return;
