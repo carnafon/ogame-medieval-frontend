@@ -572,10 +572,14 @@ function App() {
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Contenedor del Mapa */}
                         <div className="md:w-3/4 flex justify-center items-center">
-                            <canvas 
-                                ref={canvasRef} 
-                                className="w-full h-auto max-w-xl aspect-square border-4 border-gray-600 bg-gray-900 rounded-xl shadow-inner shadow-gray-700"
-                            ></canvas>
+                            <div className="relative w-full max-w-xl aspect-square">
+                                {/* Background map of Spain */}
+                                <img src="/spain.jpg" alt="Mapa de España" className="absolute inset-0 w-full h-full object-contain opacity-30 pointer-events-none" />
+                                <canvas 
+                                    ref={canvasRef} 
+                                    className="relative w-full h-full border-4 border-gray-600 bg-transparent rounded-xl shadow-inner shadow-gray-700"
+                                ></canvas>
+                            </div>
                         </div>
 
                         {/* Leyenda y Coordenadas */}

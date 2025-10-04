@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simplified stylized silhouette of the Iberian peninsula for background use -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 35 380 420" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="g" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#e6f7ff" />
+      <stop offset="100%" stop-color="#cfeeff" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="none"/>
+  <!-- This is an abstract/approximate shape intended as decorative background, not an exact map -->
+  <path d="M50 300 C40 240, 70 200, 110 180 C150 160, 190 170, 220 150 C260 125, 300 140, 320 180 C335 210, 330 245, 310 270 C295 290, 260 305, 230 310 C200 315, 160 320, 130 320 C95 320, 70 310, 50 300 Z"
+        fill="url(#g)" stroke="#9fd3f6" stroke-width="2" opacity="0.9"/>
+  <!-- Canary Islands placeholder -->
+  <g transform="translate(260,330) scale(0.4)">
+    <circle cx="10" cy="40" r="6" fill="#d0efff" stroke="#9fd3f6"/>
+    <circle cx="36" cy="56" r="5" fill="#d0efff" stroke="#9fd3f6"/>
+  </g>
+  <text x="40" y="52" font-family="sans-serif" font-size="18" fill="#6b9fcf">España</text>
+</svg>
