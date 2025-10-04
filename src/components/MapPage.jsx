@@ -141,7 +141,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, on
             {/* Nuevo canvas interactivo */}
             <MapCanvas players={mapData.players} activeId={userId} gridSize={mapData.mapSize || MAP_SIZE} cellSize={10} />
           </div>
-        </div>
+        
 
         <aside className="w-80 bg-gray-700 p-4 rounded-lg shadow-inner">
           <h3 className="text-lg font-semibold text-white mb-3">Información</h3>
