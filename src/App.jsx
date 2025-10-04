@@ -432,12 +432,28 @@ function App() {
                 }
 
                 const data = await response.json();
-                // Si la respuesta no contiene players, fallback
-                if (!data || !Array.isArray(data.players)) {
+                // Aceptar varias formas posibles de respuesta:
+                // - array directo -> [{id,x,y}, ...]
+                // - { players: [...] }
+                // - { playersList: [...] }
+                // - { map: [...] }
+                let players = [];
+                if (Array.isArray(data)) {
+                    players = data;
+                } else if (data && Array.isArray(data.players)) {
+                    players = data.players;
+                } else if (data && Array.isArray(data.playersList)) {
+                    players = data.playersList;
+                } else if (data && Array.isArray(data.map)) {
+                    players = data.map;
+                }
+
+                if (!players || !Array.isArray(players)) {
+                    console.warn('Respuesta /map inesperada, usando fallback. Respuesta completa:', data);
                     throw new Error('Formato de mapa inválido');
                 }
 
-                setMapData(data);
+                setMapData({ players });
                 setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
 
             } catch (error) {
