@@ -11,6 +11,12 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 // Intervalo de tiempo para la generación de recursos (en milisegundos)
 // 10000 ms = 10 segundos
 const GENERATION_INTERVAL_MS = 10000; 
+const MAP_REFRESH_INTERVAL = 50000; // 5 segundos para actualizar el mapa
+
+const MAP_SIZE = 100; // Tamaño del mapa 100x100
+
+
+
 
 // Definiciones de Edificios (adaptadas del código que proporcionaste)
 const BUILDING_DEFINITIONS = {
@@ -53,6 +59,9 @@ function App() {
     const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [uiMessage, setUIMessage] = useState({ text: 'Inicia sesión o regístrate.', type: 'info' });
+
+    // Estado de Navegación: 'home' o 'map'
+    const [currentView, setCurrentView] = useState('home'); 
 
     // --- Funciones de Utilidad ---
 
@@ -311,187 +320,7 @@ function App() {
         </div>
     );
 
-    // --- RENDERIZADO ---
-    
-    return (
-        <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8">
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                body { font-family: 'Inter', sans-serif; }
-            `}</style>
-            
-            <header className="text-center mb-8">
-                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                    Juego de Comercio Medieval
-                </h1>
-                {user && <p className="text-lg text-gray-400 mt-2">Bienvenido, **{user.username}**</p>}
-                <div className="h-6">
-                    {uiMessage.text && (
-                        <div className={`mt-2 p-2 rounded-lg font-semibold inline-block ${
-                            uiMessage.type === 'error' ? 'bg-red-600' : 
-                            uiMessage.type === 'warning' ? 'bg-yellow-600' : 
-                            'bg-green-600'
-                        }`}>
-                            {uiMessage.text}
-                        </div>
-                    )}
-                </div>
-            </header>
-
-            {user ? (
-                // Estado de USUARIO LOGUEADO
-                <div className="max-w-6xl mx-auto">
-
-                    // BOTON MAPA
-                    <button  
-                    onClick={() => setCurrentView('map')}  
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center shadow-lg shadow-purple-500/50 mr-4" 
-                    disabled={isLoading} 
-                    > 
-                    <Map className="w-5 h-5 mr-2" /> Ver Mapa Global 
-                    </button> 
-                    // Boton cerrar sesión
-                    <button 
-                        onClick={handleLogout} 
-                        className="float-right bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full transition-colors"
-                        disabled={isLoading}
-                    >
-                        Cerrar Sesión
-                    </button>
-                    
-                    <div className="mb-8 pt-20 sm:pt-4">
-                         {/* Display de Recursos y Población */}
-                        <section className="flex flex-wrap justify-center gap-4">
-                            <ResourceDisplay icon={Axe} value={user.wood} label="Madera" color="text-amber-500" />
-                            <ResourceDisplay icon={Mountain} value={user.stone} label="Piedra" color="text-gray-400" />
-                            <ResourceDisplay icon={Soup} value={user.food} label="Comida" color="text-green-500" />
-                            <ResourceDisplay 
-                                icon={Users} 
-                                value={`${population.current_population}/${population.max_population}`} 
-                                label="Población Usada/Max" 
-                                color="text-blue-400" 
-                            />
-                        </section>
-                    </div>
-
-                    <main className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Panel de Edificios Construidos */}
-                        <Card title="Edificios Actuales" icon={Home}>
-                            {buildings.length === 0 ? (
-                                <p className="text-gray-400">Aún no tienes edificios. ¡Construye uno!</p>
-                            ) : (
-                                <ul className="list-none space-y-2">
-                                    {buildings.map((b) => {
-                                        const def = BUILDING_DEFINITIONS[b.type];
-                                        return (
-                                            <li key={b.type} className="bg-gray-700 p-3 rounded-lg flex items-center justify-between shadow-md">
-                                                <div className="flex items-center space-x-3">
-                                                    {def && <def.icon className="w-5 h-5 text-yellow-400" />}
-                                                    <span className="font-medium text-white">{def ? def.name : b.type}</span>
-                                                </div>
-                                                <span className="text-lg font-bold text-cyan-300">Nivel {b.count}</span>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </Card>
-
-                        {/* SECCIÓN DE CONSTRUCCIÓN */}
-                        <Card title="Opciones de Construcción" icon={Factory}>
-                            {Object.entries(BUILDING_DEFINITIONS).map(([type, details]) => {
-                                const count = buildings.find(b => b.type === type)?.count || 0;
-                                return (
-                                <div key={type} className="border border-gray-700 bg-gray-700/50 rounded-xl p-4 shadow-lg">
-                                    <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {count + 1})</h4>
-                                    <p className="text-sm text-gray-400 mb-3">{details.description}</p>
-                                    
-                                    <p className="font-semibold text-gray-300 text-sm">
-                                        Costo: 
-                                        {details.cost.wood > 0 && ` | Madera: ${details.cost.wood}`}
-                                        {details.cost.stone > 0 && ` | Piedra: ${details.cost.stone}`}
-                                        {details.cost.food > 0 && ` | Comida: ${details.cost.food}`}
-                                    </p>
-
-                                    <button 
-                                        onClick={() => handleBuild(type)} 
-                                        disabled={!canBuild(details.cost) || isLoading}
-                                        className={`mt-3 w-full py-2 font-bold rounded-lg transition-all ${
-                                            canBuild(details.cost) && !isLoading 
-                                                ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-500/30 text-white' 
-                                                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        {isLoading ? 'Cargando...' : `Construir 1 ${details.name}`}
-                                    </button>
-                                    {!canBuild(details.cost) && <p className="text-xs text-center text-red-400 mt-2">Recursos insuficientes.</p>}
-                                </div>
-                            )})}
-                        </Card>
-                    </main>
-                </div>
-            ) : (
-                // Estado de NO LOGUEADO: Formulario de Autenticación
-                <div className="max-w-md mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl">
-                    <div className="flex justify-between mb-6">
-                        <button 
-                            onClick={() => setIsRegistering(false)} 
-                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${
-                                !isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400'
-                            }`}
-                        >
-                            <LogIn className="w-5 h-5 inline mr-2" /> Iniciar Sesión
-                        </button>
-                        <button 
-                            onClick={() => setIsRegistering(true)} 
-                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${
-                                isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400'
-                            }`}
-                        >
-                            <UserPlus className="w-5 h-5 inline mr-2" /> Registrarse
-                        </button>
-                    </div>
-                    
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        <input
-                            type="text"
-                            placeholder="Usuario"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <button 
-                            type="submit" 
-                            disabled={isLoading}
-                            className={`w-full py-3 font-bold rounded-lg transition-all ${
-                                isLoading ? 'bg-gray-500' : 'bg-cyan-600 hover:bg-cyan-700 shadow-md shadow-cyan-500/30'
-                            } text-white`}
-                        >
-                            {isLoading ? <Loader className="w-5 h-5 inline animate-spin" /> : (isRegistering ? 'Crear Cuenta' : 'Acceder')}
-                        </button>
-                    </form>
-                </div>
-            )}
-
-            <footer className="text-center mt-12 text-gray-500 text-sm">
-                <p>Juego de Comercio Medieval desarrollado con React y Tailwind CSS.</p>
-            </footer>
-        </div>
-    );
-}
-
-
-
-// --- COMPONENTE MAPA (MapContent) ---
+   // --- COMPONENTE MAPA (MapContent) ---
 
     const MapContent = () => {
         const canvasRef = useRef(null);
@@ -723,7 +552,189 @@ function App() {
         );
     };
 
+    // --- RENDERIZADO PRINCIPAL --- 
+    
+    // Contenido del Dashboard principal (Home View)
+    const HomeContent = () => (
+        <div className="max-w-6xl mx-auto"> 
+            <div className="flex justify-end mb-4">
+                <button  
+                    onClick={() => setCurrentView('map')}  
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center shadow-lg shadow-purple-500/50 mr-4" 
+                    disabled={isLoading} 
+                > 
+                    <Map className="w-5 h-5 mr-2" /> Ver Mapa Global 
+                </button> 
+                <button  
+                    onClick={handleLogout}  
+                    className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full transition-colors" 
+                    disabled={isLoading} 
+                > 
+                    Cerrar Sesión 
+                </button> 
+            </div>
+            
+            <div className="mb-8 pt-4"> 
+                {/* Display de Recursos y Población */} 
+                <section className="flex flex-wrap justify-center gap-4"> 
+                    <ResourceDisplay icon={Axe} value={user.wood} label="Madera" color="text-amber-500" /> 
+                    <ResourceDisplay icon={Mountain} value={user.stone} label="Piedra" color="text-gray-400" /> 
+                    <ResourceDisplay icon={Soup} value={user.food} label="Comida" color="text-green-500" /> 
+                    <ResourceDisplay  
+                        icon={Users}  
+                        value={`${population.current_population}/${population.max_population}`}  
+                        label="Población Usada/Max"  
+                        color="text-blue-400"  
+                    /> 
+                </section> 
+            </div> 
 
+            <main className="grid grid-cols-1 lg:grid-cols-2 gap-8"> 
+                {/* Panel de Edificios Construidos */} 
+                <Card title="Edificios Actuales" icon={Home}> 
+                    {buildings.length === 0 ? ( 
+                        <p className="text-gray-400">Aún no tienes edificios. ¡Construye uno!</p> 
+                    ) : ( 
+                        <ul className="list-none space-y-2"> 
+                            {buildings.map((b) => { 
+                                const def = BUILDING_DEFINITIONS[b.type]; 
+                                return ( 
+                                    <li key={b.type} className="bg-gray-700 p-3 rounded-lg flex items-center justify-between shadow-md"> 
+                                        <div className="flex items-center space-x-3"> 
+                                            {def && <def.icon className="w-5 h-5 text-yellow-400" />} 
+                                            <span className="font-medium text-white">{def ? def.name : b.type}</span> 
+                                        </div> 
+                                        <span className="text-lg font-bold text-cyan-300">Nivel {b.count}</span> 
+                                    </li> 
+                                ); 
+                            })} 
+                        </ul> 
+                    )} 
+                </Card> 
 
+                {/* SECCIÓN DE CONSTRUCCIÓN */} 
+                <Card title="Opciones de Construcción" icon={Factory}> 
+                    {Object.entries(BUILDING_DEFINITIONS).map(([type, details]) => { 
+                        const count = buildings.find(b => b.type === type)?.count || 0; 
+                        return ( 
+                        <div key={type} className="border border-gray-700 bg-gray-700/50 rounded-xl p-4 shadow-lg"> 
+                            <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {count + 1})</h4> 
+                            <p className="text-sm text-gray-400 mb-3">{details.description}</p> 
+                            
+                            <p className="font-semibold text-gray-300 text-sm"> 
+                                Costo:  
+                                {details.cost.wood > 0 && ` | Madera: ${details.cost.wood}`} 
+                                {details.cost.stone > 0 && ` | Piedra: ${details.cost.stone}`} 
+                                {details.cost.food > 0 && ` | Comida: ${details.cost.food}`} 
+                            </p> 
+
+                            <button  
+                                onClick={() => handleBuild(type)}  
+                                disabled={!canBuild(details.cost) || isLoading} 
+                                className={`mt-3 w-full py-2 font-bold rounded-lg transition-all ${ 
+                                    canBuild(details.cost) && !isLoading  
+                                        ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-500/30 text-white'  
+                                        : 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                                }`} 
+                            > 
+                                {isLoading ? 'Cargando...' : `Construir 1 ${details.name}`} 
+                            </button> 
+                            {!canBuild(details.cost) && <p className="text-xs text-center text-red-400 mt-2">Recursos insuficientes.</p>} 
+                        </div> 
+                        )})} 
+                </Card> 
+            </main> 
+        </div> 
+    );
+    
+    return ( 
+        <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8"> 
+            <style>{` 
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap'); 
+                body { font-family: 'Inter', sans-serif; } 
+            `}</style> 
+            
+            <header className="text-center mb-8"> 
+                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"> 
+                    Juego de Comercio Medieval 
+                </h1> 
+                {user && <p className="text-lg text-gray-400 mt-2">Bienvenido, **{user.username}**</p>} 
+                <div className="h-6"> 
+                    {uiMessage.text && ( 
+                        <div className={`mt-2 p-2 rounded-lg font-semibold inline-block ${ 
+                            uiMessage.type === 'error' ? 'bg-red-600' :  
+                            uiMessage.type === 'warning' ? 'bg-yellow-600' :  
+                            'bg-green-600' 
+                        }`}> 
+                            {uiMessage.text} 
+                        </div> 
+                    )} 
+                </div> 
+            </header> 
+
+            {user ? ( 
+                // Estado de USUARIO LOGUEADO - Renderizado condicional por vista
+                <>
+                    {currentView === 'home' && <HomeContent />}
+                    {currentView === 'map' && <MapContent />}
+                </>
+            ) : ( 
+                // Estado de NO LOGUEADO: Formulario de Autenticación 
+                <div className="max-w-md mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl"> 
+                    <div className="flex justify-between mb-6"> 
+                        <button  
+                            onClick={() => setIsRegistering(false)}  
+                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${ 
+                                !isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400' 
+                            }`} 
+                        > 
+                            <LogIn className="w-5 h-5 inline mr-2" /> Iniciar Sesión 
+                        </button> 
+                        <button  
+                            onClick={() => setIsRegistering(true)}  
+                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${ 
+                                isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400' 
+                            }`} 
+                        > 
+                            <UserPlus className="w-5 h-5 inline mr-2" /> Registrarse 
+                        </button> 
+                    </div> 
+                    
+                    <form onSubmit={handleAuth} className="space-y-4"> 
+                        <input 
+                            type="text" 
+                            placeholder="Usuario" 
+                            value={username} 
+                            onChange={(e) => setUsername(e.target.value)} 
+                            required 
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500" 
+                        /> 
+                        <input 
+                            type="password" 
+                            placeholder="Contraseña" 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                            required 
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500" 
+                        /> 
+                        <button  
+                            type="submit"  
+                            disabled={isLoading} 
+                            className={`w-full py-3 font-bold rounded-lg transition-all ${ 
+                                isLoading ? 'bg-gray-500' : 'bg-cyan-600 hover:bg-cyan-700 shadow-md shadow-cyan-500/30' 
+                            } text-white`} 
+                        > 
+                            {isLoading ? <Loader className="w-5 h-5 inline animate-spin" /> : (isRegistering ? 'Crear Cuenta' : 'Acceder')} 
+                        </button> 
+                    </form> 
+                </div> 
+            )} 
+
+            <footer className="text-center mt-12 text-gray-500 text-sm"> 
+                <p>Juego de Comercio Medieval desarrollado con React y Tailwind CSS.</p> 
+            </footer> 
+        </div> 
+    ); 
+} 
 
 export default App;
