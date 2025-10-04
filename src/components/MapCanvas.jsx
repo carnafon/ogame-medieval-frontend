@@ -33,11 +33,12 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         if (!p) return;
         const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
         const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
-        if(p.is_current_user === false)
-          {activeId=p.id;}
+        const jugActivo = null;
+        if(p.is_current_user === true)
+          {jugActivo=p.id;}
         ctx.beginPath();
         ctx.arc(px, py, (cellSize * scale) / 3, 0, 2 * Math.PI);
-        ctx.fillStyle = p.id === activeId ? "cyan" : "red";
+        ctx.fillStyle = p.id === jugActivo ? "cyan" : "red";
         ctx.fill();
 
         // Nombre del jugador
