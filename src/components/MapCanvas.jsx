@@ -28,12 +28,16 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         ctx.stroke();
       }
       console.log("jugador", players);
+      (players).forEach(p) => {
+    console.log("XXAA", p.id); // Aquí sí puedes leer p.id
+     };
+
       // Dibujar jugadores
       (players || []).forEach((p) => {
         if (!p) return;
         const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
         const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
-        console.log("coorrdenada", px,py,players.id);
+        //console.log("coorrdenada", px,py,players.id);
         let jugActivo = p.id;
         if(p.is_current_user === false)
           {jugActivo=0;}
