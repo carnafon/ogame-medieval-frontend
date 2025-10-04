@@ -8,7 +8,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    console.log("Players to draw:", players);
+    
    
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -33,6 +33,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         if (!p) return;
         const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
         const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
+        console.log("coorrdenada", px,py);
         let jugActivo = p.id;
         if(p.is_current_user === false)
           {jugActivo=0;}
