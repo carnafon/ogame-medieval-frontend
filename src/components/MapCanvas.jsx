@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 
-export default function MapCanvas({ players, activeId, gridSize = 100, cellSize = 20 }) {
+export default function MapCanvas({ players = [], activeId, gridSize = 100, cellSize = 20 }) {
   const canvasRef = useRef(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
@@ -28,7 +28,8 @@ export default function MapCanvas({ players, activeId, gridSize = 100, cellSize 
       }
 
       // Dibujar jugadores
-      players.forEach((p) => {
+      (players || []).forEach((p) => {
+        if (!p) return;
         const px = p.x * cellSize * scale + offset.x + (cellSize * scale) / 2;
         const py = p.y * cellSize * scale + offset.y + (cellSize * scale) / 2;
         ctx.beginPath();
