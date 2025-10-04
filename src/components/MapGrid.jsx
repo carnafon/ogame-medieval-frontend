@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 
 // MapGrid: recibe players (array of {id,x,y}), activeId, mapSize (default 100), bgImage optional
-export default function MapGrid({ players = [], activeId, mapSize = 100, bgImage = '/spain.jpg', grid = true }) {
+export default function MapGrid({ players = [], activeId, mapSize = 100, bgImage = '/spain.jpg', grid = true, fillCells = false }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -57,27 +57,50 @@ export default function MapGrid({ players = [], activeId, mapSize = 100, bgImage
     }
 
     // Draw players
-    players.forEach(p => {
-      if (typeof p.x !== 'number' || typeof p.y !== 'number') return;
-      const cx = (p.x + 0.5) * cellSize;
-      const cy = (mapSize - p.y - 0.5) * cellSize;
-      const isActive = String(p.id) === String(activeId);
-      const r = Math.max(3, cellSize * 0.28);
+    if (fillCells) {
+      // Draw each player as a filled cell (sized to cellSize)
+      players.forEach(p => {
+        if (typeof p.x !== 'number' || typeof p.y !== 'number') return;
+        const px = Math.floor(p.x);
+        const py = Math.floor(p.y);
+        if (px < 0 || py < 0 || px >= mapSize || py >= mapSize) return;
+        const x = px * cellSize;
+        const y = (mapSize - py - 1) * cellSize; // invert Y to keep origin bottom-left
 
-      // shadow / outline
-      ctx.beginPath(); ctx.arc(cx, cy, r + 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+        // background for cell
+        ctx.fillStyle = String(p.id) === String(activeId) ? '#10B981' : '#3B82F6';
+        ctx.fillRect(x + 0.5, y + 0.5, Math.max(1, cellSize - 1), Math.max(1, cellSize - 1));
 
-      // fill
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = isActive ? '#10B981' : '#3B82F6'; ctx.fill();
-      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.stroke();
+        // optional id text when cell is large enough
+        if (cellSize > 12) {
+          ctx.font = `${Math.max(9, cellSize * 0.22)}px Inter, sans-serif`;
+          ctx.fillStyle = 'white';
+          ctx.fillText(String(p.id), x + 4, y + 12);
+        }
+      });
+    } else {
+      players.forEach(p => {
+        if (typeof p.x !== 'number' || typeof p.y !== 'number') return;
+        const cx = (p.x + 0.5) * cellSize;
+        const cy = (mapSize - p.y - 0.5) * cellSize;
+        const isActive = String(p.id) === String(activeId);
+        const r = Math.max(3, cellSize * 0.28);
 
-      // id label
-      if (!isActive) {
-        ctx.font = `${Math.max(9, cellSize * 0.22)}px Inter, sans-serif`;
-        ctx.fillStyle = 'white';
-        ctx.fillText(String(p.id), cx + r + 4, cy - r - 4);
-      }
-    });
+        // shadow / outline
+        ctx.beginPath(); ctx.arc(cx, cy, r + 1.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+
+        // fill
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = isActive ? '#10B981' : '#3B82F6'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.stroke();
+
+        // id label
+        if (!isActive) {
+          ctx.font = `${Math.max(9, cellSize * 0.22)}px Inter, sans-serif`;
+          ctx.fillStyle = 'white';
+          ctx.fillText(String(p.id), cx + r + 4, cy - r - 4);
+        }
+      });
+    }
   };
 
   // Redraw on players change

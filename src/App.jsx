@@ -336,7 +336,7 @@ function App() {
    // --- COMPONENTE MAPA (MapContent) ---
 
     const MapContent = () => {
-        const [mapData, setMapData] = useState({ players: [] });
+        const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
         const [loadingMap, setLoadingMap] = useState(true);
         const token = localStorage.getItem('authToken');
         const userId = user?.id;
@@ -347,7 +347,7 @@ function App() {
         const fetchMapData = useCallback(async () => {
             if (!token || !userId) {
                 // No hay token o usuario: limpiar datos y salir
-                setMapData({ players: [] });
+                setMapData({ players: [], mapSize: MAP_SIZE });
                 setLoadingMap(false);
                 return;
             }
@@ -399,58 +399,64 @@ function App() {
                     players = data.map;
                 }
 
+                // Extraer mapSize si el backend lo devuelve (mapSize, size o map_size)
+                const mapSizeFromServer = data && (data.mapSize || data.size || data.map_size);
+                const mapSize = Number.isFinite(mapSizeFromServer) ? mapSizeFromServer : MAP_SIZE;
+
+                setMapData({ players, mapSize });
+                
                 if (!players || !Array.isArray(players)) {
-                    console.warn('Respuesta /map inesperada, usando fallback. Respuesta completa:', data);
-                    throw new Error('Formato de mapa inválido');
-                }
+                     console.warn('Respuesta /map inesperada, usando fallback. Respuesta completa:', data);
+                     throw new Error('Formato de mapa inválido');
+                 }
 
-                setMapData({ players });
                 setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
-                // MapGrid se encargará de renderizar cuando mapData cambie
+                 // MapGrid se encargará de renderizar cuando mapData cambie
 
-            } catch (error) {
-                // Timeout o cualquier error: registrar y generar fallback inmediato
-                console.warn('Error fetching map data, using fallback simulation:', error && error.message);
+             } catch (error) {
+                 // Timeout o cualquier error: registrar y generar fallback inmediato
+                 console.warn('Error fetching map data, using fallback simulation:', error && error.message);
 
-                const numOtherPlayers = 3;
+                 const numOtherPlayers = 3;
                 setMapData(prev => {
                     const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
+                    const currentMapSize = prev.mapSize || MAP_SIZE;
                     const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
 
                     if (simulatedPlayers.length === 0) {
                         simulatedPlayers.push({
                             id: userId,
-                            x: Math.floor(Math.random() * MAP_SIZE),
-                            y: Math.floor(Math.random() * MAP_SIZE)
+                            x: Math.floor(Math.random() * currentMapSize),
+                            y: Math.floor(Math.random() * currentMapSize)
                         });
                     } else {
-                        simulatedPlayers[0].x = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
-                        simulatedPlayers[0].y = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
+                        simulatedPlayers[0].x = Math.max(0, Math.min(currentMapSize - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
+                        simulatedPlayers[0].y = Math.max(0, Math.min(currentMapSize - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
                     }
 
                     for (let i = 0; i < numOtherPlayers; i++) {
                         const id = `user-${i + 1}`;
                         let existingPlayer = prevPlayers.find(p => p.id === id);
                         if (!existingPlayer) {
-                            existingPlayer = { id, x: Math.floor(Math.random() * MAP_SIZE), y: Math.floor(Math.random() * MAP_SIZE) };
+                            existingPlayer = { id, x: Math.floor(Math.random() * currentMapSize), y: Math.floor(Math.random() * currentMapSize) };
                         } else {
-                            existingPlayer.x = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
-                            existingPlayer.y = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
+                            existingPlayer.x = Math.max(0, Math.min(currentMapSize - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
+                            existingPlayer.y = Math.max(0, Math.min(currentMapSize - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
                         }
                         simulatedPlayers.push(existingPlayer);
                     }
 
-                    return { players: simulatedPlayers };
+                    return { players: simulatedPlayers, mapSize: currentMapSize };
                 });
 
-            } finally {
-                clearTimeout(timeoutId);
-                // limpiar controller referencia si coincide
-                if (lastControllerRef.current === controller) lastControllerRef.current = null;
-                isFetchingRef.current = false;
-                setLoadingMap(false);
-            }
-    }, [token, userId]);
+             } finally {
+                 clearTimeout(timeoutId);
+                 // limpiar controller referencia si coincide
+                 if (lastControllerRef.current === controller) lastControllerRef.current = null;
+                 isFetchingRef.current = false;
+                 setLoadingMap(false);
+             }
+     }, [token, userId]);
 
 
         // Efecto para el bucle de actualización del mapa
@@ -501,17 +507,17 @@ function App() {
                         {/* Contenedor del Mapa */}
                         <div className="md:w-3/4 flex justify-center items-center">
                             <div className="relative w-full max-w-xl aspect-square border-4 border-gray-600 rounded-xl overflow-hidden">
-                                <MapGrid players={mapData.players} activeId={userId} mapSize={MAP_SIZE} bgImage="/spain.jpg" />
+                                <MapGrid players={mapData.players} activeId={userId} mapSize={mapData.mapSize || MAP_SIZE} bgImage="/spain.jpg" fillCells={true} />
                             </div>
-                        </div>
+                         </div>
 
-                        {/* Leyenda y Coordenadas */}
-                        <div className="md:w-1/4 bg-gray-700 p-4 rounded-lg shadow-inner">
-                            <h3 className="text-xl font-semibold text-white mb-3">Información</h3>
-                            
+                         {/* Leyenda y Coordenadas */}
+                         <div className="md:w-1/4 bg-gray-700 p-4 rounded-lg shadow-inner">
+                             <h3 className="text-xl font-semibold text-white mb-3">Información</h3>
+                             
                             <p className="text-sm text-gray-300 mb-4">
                                 Posición de los jugadores en el territorio.
-                                <br/>El mapa se actualiza cada ${MAP_REFRESH_INTERVAL / 1000}$ segundos.
+                                <br/>Mapa: {mapData.mapSize || MAP_SIZE} x {mapData.mapSize || MAP_SIZE} — se actualiza cada {MAP_REFRESH_INTERVAL / 1000} s.
                             </p>
                             
                             <div className="space-y-3">
@@ -523,17 +529,17 @@ function App() {
                                     <p className="text-sm text-gray-200">
                                         Coordenadas: <span className="font-bold">({myPlayer.x}, {myPlayer.y})</span>
                                     </p>
-                                </div>
-                                {/* Otros Jugadores */}
-                                <div className="bg-gray-800 p-3 rounded-lg shadow-md border-l-4 border-blue-500">
-                                    <p className="font-semibold text-blue-400 flex items-center mb-1">
-                                        <div className="w-3 h-3 rounded-full mr-2 bg-blue-500"></div> Otros Jugadores
-                                    </p>
-                                    <p className="text-sm text-gray-200">
-                                        Total Vistos: <span className="font-bold">{mapData.players.length - 1}</span>
-                                    </p>
-                                </div>
-                                
+                                 </div>
+                                 {/* Otros Jugadores */}
+                                 <div className="bg-gray-800 p-3 rounded-lg shadow-md border-l-4 border-blue-500">
+                                     <p className="font-semibold text-blue-400 flex items-center mb-1">
+                                         <div className="w-3 h-3 rounded-full mr-2 bg-blue-500"></div> Otros Jugadores
+                                     </p>
+                                     <p className="text-sm text-gray-200">
+                                        Total Vistos: <span className="font-bold">{Math.max(0, (mapData.players || []).length - 1)}</span>
+                                     </p>
+                                 </div>
+                                 
                                 {loadingMap && (
                                     <p className="text-center text-yellow-500 mt-4 flex items-center justify-center">
                                         <Loader className="w-4 h-4 mr-2 animate-spin" /> 
