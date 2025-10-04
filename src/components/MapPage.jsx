@@ -13,7 +13,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, on
     if (!token) return;
 
     setLoading(true);
-    fetch(`${API_BASE_URL}/game/map`, {
+    fetch(`${API_BASE_URL}/map`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
