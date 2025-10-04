@@ -28,9 +28,9 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         ctx.stroke();
       }
       console.log("jugador", players);
-      (players).forEach(p) => {
+      (players).forEach((p) => {
     console.log("XXAA", p.id); // Aquí sí puedes leer p.id
-     };
+     });
 
       // Dibujar jugadores
       (players || []).forEach((p) => {
