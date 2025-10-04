@@ -347,6 +347,7 @@ function App() {
         const [mapData, setMapData] = useState({ players: [] });
         const [loadingMap, setLoadingMap] = useState(true);
         const token = localStorage.getItem('authToken');
+        const userId = user?.id;
         // Función para simular/llamar a la API /map
         const isFetchingRef = useRef(false);
         const lastControllerRef = useRef(null);
