@@ -341,6 +341,16 @@ function App() {
             {user ? (
                 // Estado de USUARIO LOGUEADO
                 <div className="max-w-6xl mx-auto">
+
+                    // BOTON MAPA
+                    <button  
+                    onClick={() => setCurrentView('map')}  
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center shadow-lg shadow-purple-500/50 mr-4" 
+                    disabled={isLoading} 
+                    > 
+                    <Map className="w-5 h-5 mr-2" /> Ver Mapa Global 
+                    </button> 
+                    // Boton cerrar sesión
                     <button 
                         onClick={handleLogout} 
                         className="float-right bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full transition-colors"
@@ -478,5 +488,242 @@ function App() {
         </div>
     );
 }
+
+
+
+// --- COMPONENTE MAPA (MapContent) ---
+
+    const MapContent = () => {
+        const canvasRef = useRef(null);
+        const [mapData, setMapData] = useState({ players: [] });
+        const [loadingMap, setLoadingMap] = useState(true);
+        const token = localStorage.getItem('authToken');
+        
+        // Dibuja el estado actual de los jugadores en el canvas.
+        const drawMap = useCallback((players, userId) => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+
+            // Asegura que el canvas sea cuadrado y responsivo
+            const size = canvas.clientWidth;
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Tamaño de la celda en píxeles
+            const cellSize = size / MAP_SIZE;
+            // Radio del punto del jugador (asegura visibilidad)
+            const pointRadius = Math.max(3, cellSize * 0.2); 
+
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, size, size);
+
+            // 1. Dibujar la cuadrícula de fondo (cada 10 unidades)
+            ctx.strokeStyle = '#4b5563'; // gray-600
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= MAP_SIZE; i += 10) {
+                const pos = i * cellSize;
+                // Vertical
+                ctx.beginPath();
+                ctx.moveTo(pos, 0);
+                ctx.lineTo(pos, size);
+                ctx.stroke();
+                // Horizontal
+                ctx.beginPath();
+                ctx.moveTo(0, pos);
+                ctx.lineTo(size, pos);
+                ctx.stroke();
+            }
+
+            // 2. Dibujar jugadores
+            players.forEach(player => {
+                // Mapear (x, y) a píxeles. (0,0) abajo-izquierda.
+                // Usamos (MAP_SIZE - y - 0.5) para invertir Y y centrar
+                const canvasX = (player.x + 0.5) * cellSize;
+                const canvasY = (MAP_SIZE - player.y - 0.5) * cellSize; 
+
+                ctx.beginPath();
+                ctx.arc(canvasX, canvasY, pointRadius, 0, Math.PI * 2);
+
+                if (player.id === userId) {
+                    // Jugador actual: color verde
+                    ctx.fillStyle = '#10B981'; // Tailwind green-500
+                } else {
+                    // Otros jugadores: color azul
+                    ctx.fillStyle = '#3B82F6'; // Tailwind blue-500
+                }
+                ctx.fill();
+                ctx.strokeStyle = '#1F2937'; 
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            });
+        }, [user.id]); // Dependencia del ID del usuario para diferenciar colores
+
+        // Función para simular/llamar a la API /map
+        const fetchMapData = useCallback(async () => {
+            if (!token) return;
+            setLoadingMap(true);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/map`, {
+                    method: 'GET',
+                    headers: getAuthHeaders(token)
+                });
+
+                if (!response.ok) {
+                    // Si el backend aún no tiene el endpoint /map, simulamos los datos.
+                    if (response.status === 404) {
+                        displayMessage('Endpoint /map no encontrado en el servidor. Usando datos simulados.', 'warning');
+                        throw new Error('404'); 
+                    }
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al cargar el mapa.');
+                }
+                
+                const data = await response.json();
+                setMapData(data); // Esperamos { players: [...] }
+                displayMessage('Mapa actualizado.', 'info');
+                
+            } catch (error) {
+                console.warn("Error fetching map data, simulating:", error.message);
+                
+                // --- Simulación de datos (Fallback) ---
+                const numOtherPlayers = 3; 
+                const simulatedPlayers = mapData.players.filter(p => p.id === user.id);
+
+                if (simulatedPlayers.length === 0) {
+                    // Asegurar que el jugador actual siempre aparezca
+                    simulatedPlayers.push({ 
+                        id: user.id, 
+                        x: Math.floor(Math.random() * MAP_SIZE), 
+                        y: Math.floor(Math.random() * MAP_SIZE) 
+                    });
+                } else {
+                    // Simular movimiento ligero del jugador actual
+                    simulatedPlayers[0].x = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
+                    simulatedPlayers[0].y = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
+                }
+
+                // Generar otros jugadores (o mantener su posición simulada)
+                for (let i = 0; i < numOtherPlayers; i++) {
+                    const id = `user-${i + 1}`;
+                    let existingPlayer = mapData.players.find(p => p.id === id);
+                    if (!existingPlayer) {
+                         existingPlayer = {
+                            id: id,
+                            x: Math.floor(Math.random() * MAP_SIZE), 
+                            y: Math.floor(Math.random() * MAP_SIZE)
+                        };
+                    } else {
+                        // Simular movimiento ligero de otros jugadores
+                        existingPlayer.x = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
+                        existingPlayer.y = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
+                    }
+                    simulatedPlayers.push(existingPlayer);
+                }
+                
+                setMapData({ players: simulatedPlayers });
+                // --- Fin Simulación ---
+                
+            } finally {
+                setLoadingMap(false);
+            }
+        }, [token, getAuthHeaders, displayMessage, user.id, mapData.players]);
+
+
+        // Efecto para el bucle de actualización del mapa
+        useEffect(() => {
+            fetchMapData(); // Cargar inmediatamente
+
+            const timer = setInterval(fetchMapData, MAP_REFRESH_INTERVAL);
+            return () => clearInterval(timer);
+        }, [fetchMapData]);
+
+        // Efecto para redibujar el canvas cuando cambian los datos o el tamaño de la ventana
+        useEffect(() => {
+            if (mapData.players.length > 0) {
+                // Redibujar el mapa. Se envuelve en un listener de resize para responsividad.
+                const handleResizeAndDraw = () => drawMap(mapData.players, user.id);
+                handleResizeAndDraw();
+                window.addEventListener('resize', handleResizeAndDraw);
+                return () => window.removeEventListener('resize', handleResizeAndDraw);
+            }
+        }, [mapData, drawMap, user.id]); 
+
+        const myPlayer = mapData.players.find(p => p.id === user.id) || {x: 'N/A', y: 'N/A'};
+
+
+        return (
+            <div className="p-4 bg-gray-900 min-h-screen">
+                <div className="flex justify-between items-center mb-6">
+                    <button 
+                        onClick={() => setCurrentView('home')}
+                        className="flex items-center text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                    >
+                        <ChevronLeft className="w-5 h-5 mr-1" /> Volver a la Ciudad
+                    </button>
+                    <button  
+                        onClick={handleLogout}  
+                        className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full transition-colors" 
+                        disabled={isLoading} 
+                    > 
+                        Cerrar Sesión 
+                    </button> 
+                </div>
+
+                <Card title={`Mapa Global (Territorio ${MAP_SIZE}x${MAP_SIZE})`} icon={Map}>
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Contenedor del Mapa */}
+                        <div className="md:w-3/4 flex justify-center items-center">
+                            <canvas 
+                                ref={canvasRef} 
+                                className="w-full h-auto max-w-xl aspect-square border-4 border-gray-600 bg-gray-900 rounded-xl shadow-inner shadow-gray-700"
+                            ></canvas>
+                        </div>
+
+                        {/* Leyenda y Coordenadas */}
+                        <div className="md:w-1/4 bg-gray-700 p-4 rounded-lg shadow-inner">
+                            <h3 className="text-xl font-semibold text-white mb-3">Información</h3>
+                            
+                            <p className="text-sm text-gray-300 mb-4">
+                                Posición de los jugadores en el territorio.
+                                <br/>El mapa se actualiza cada ${MAP_REFRESH_INTERVAL / 1000}$ segundos.
+                            </p>
+                            
+                            <div className="space-y-3">
+                                {/* Mi Posición */}
+                                <div className="bg-gray-800 p-3 rounded-lg shadow-md border-l-4 border-green-500">
+                                    <p className="font-semibold text-green-400 flex items-center mb-1">
+                                        <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div> Mi Posición
+                                    </p>
+                                    <p className="text-sm text-gray-200">
+                                        Coordenadas: <span className="font-bold">({myPlayer.x}, {myPlayer.y})</span>
+                                    </p>
+                                </div>
+                                {/* Otros Jugadores */}
+                                <div className="bg-gray-800 p-3 rounded-lg shadow-md border-l-4 border-blue-500">
+                                    <p className="font-semibold text-blue-400 flex items-center mb-1">
+                                        <div className="w-3 h-3 rounded-full mr-2 bg-blue-500"></div> Otros Jugadores
+                                    </p>
+                                    <p className="text-sm text-gray-200">
+                                        Total Vistos: <span className="font-bold">{mapData.players.length - 1}</span>
+                                    </p>
+                                </div>
+                                
+                                {loadingMap && (
+                                    <p className="text-center text-yellow-500 mt-4 flex items-center justify-center">
+                                        <Loader className="w-4 h-4 mr-2 animate-spin" /> 
+                                        Cargando datos...
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        );
+    };
+
+
+
 
 export default App;
