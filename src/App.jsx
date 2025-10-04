@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus 
+    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus, Map, ChevronLeft
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN FRONTAL ---
