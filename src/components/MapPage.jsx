@@ -27,7 +27,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, on
           mapSize: data.mapSize || MAP_SIZE,
         });
         setUIMessage && setUIMessage('Mapa cargado.', 'success');
-        console.log("Pdata:", data);
+      
       })
       .catch((err) => {
         console.error(err);
