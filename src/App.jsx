@@ -523,7 +523,7 @@ function App() {
                 isFetchingRef.current = false;
                 setLoadingMap(false);
             }
-        }, [token, userId]);
+    }, [token, userId, drawMap]);
 
 
         // Efecto para el bucle de actualización del mapa
