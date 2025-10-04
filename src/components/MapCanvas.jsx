@@ -35,13 +35,18 @@ export default function MapCanvas({ players, activeId, gridSize = 100, cellSize 
         ctx.arc(px, py, (cellSize * scale) / 3, 0, 2 * Math.PI);
         ctx.fillStyle = p.id === activeId ? "cyan" : "red";
         ctx.fill();
+
+        // Nombre del jugador
+        ctx.fillStyle = "white";
+        ctx.font = `${12 * scale}px sans-serif`;
+        ctx.fillText(p.username || p.id, px + 5, py - 5);
       });
     };
 
     draw();
   }, [players, offset, scale, gridSize, cellSize, activeId]);
 
-  // Eventos de arrastre (panning)
+  // Panning + zoom
   useEffect(() => {
     const canvas = canvasRef.current;
     let isDragging = false;
@@ -84,8 +89,9 @@ export default function MapCanvas({ players, activeId, gridSize = 100, cellSize 
       ref={canvasRef}
       width={600}
       height={600}
-      className="border border-gray-500 rounded-lg"
+      className="border border-gray-500 rounded-lg bg-black"
     />
   );
 }
+
 
