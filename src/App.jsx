@@ -344,7 +344,7 @@ function App() {
         const isFetchingRef = useRef(false);
         const lastControllerRef = useRef(null);
 
-        const fetchMapData = useCallback(async () => {
+    const fetchMapData = useCallback(async () => {
             if (!token || !userId) {
                 // No hay token o usuario: limpiar datos y salir
                 setMapData({ players: [], mapSize: MAP_SIZE });
@@ -426,11 +426,10 @@ function App() {
                 console.warn('Error fetching map data, using fallback simulation:', error && error.message);
 
                  const numOtherPlayers = 3;
-                // DEBUG: indicate we're entering fallback path
-                // eslint-disable-next-line no-console
-                console.debug('[Map] using fallback simulation, current mapData:', mapData);
-
+                // DEBUG: indicate we're entering fallback path (will inspect prev inside callback)
                 setMapData(prev => {
+                    // eslint-disable-next-line no-console
+                    console.debug('[Map] fallback prev', prev);
                      const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
                      const currentMapSize = prev.mapSize || MAP_SIZE;
                      const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
@@ -468,7 +467,7 @@ function App() {
                  isFetchingRef.current = false;
                  setLoadingMap(false);
              }
-     }, [token, userId]);
+    }, [token, userId, mapData]);
  
         // DEBUG: log mapData when it updates
         useEffect(() => {
