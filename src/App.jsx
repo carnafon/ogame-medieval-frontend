@@ -338,14 +338,15 @@ function App() {
     const MapContent = () => {
         const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
         const [loadingMap, setLoadingMap] = useState(true);
-        const token = localStorage.getItem('authToken');
         const userId = user?.id;
         // Función para simular/llamar a la API /map
         const isFetchingRef = useRef(false);
         const lastControllerRef = useRef(null);
 
-    const fetchMapData = useCallback(async () => {
-            if (!token || !userId) {
+        async function fetchMapData() {
+            const tokenNow = localStorage.getItem('authToken');
+            const userIdNow = user?.id;
+            if (!tokenNow || !userIdNow) {
                 // No hay token o usuario: limpiar datos y salir
                 setMapData({ players: [], mapSize: MAP_SIZE });
                 setLoadingMap(false);
@@ -367,7 +368,7 @@ function App() {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${tokenNow}`
                     },
                     signal: controller.signal
                 });
@@ -432,11 +433,11 @@ function App() {
                     console.debug('[Map] fallback prev', prev);
                      const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
                      const currentMapSize = prev.mapSize || MAP_SIZE;
-                     const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
+                     const simulatedPlayers = prevPlayers.filter(p => p.id === userIdNow);
 
                     if (simulatedPlayers.length === 0) {
                         simulatedPlayers.push({
-                            id: userId,
+                            id: userIdNow,
                             x: Math.floor(Math.random() * currentMapSize),
                             y: Math.floor(Math.random() * currentMapSize)
                         });
@@ -467,21 +468,25 @@ function App() {
                  isFetchingRef.current = false;
                  setLoadingMap(false);
              }
-    }, [token, userId]);
+        }
  
         // DEBUG: log mapData when it updates
         useEffect(() => {
+            const tokenNow = localStorage.getItem('authToken');
+            const userIdNow = user?.id;
             // eslint-disable-next-line no-console
-            console.debug('[MapContent] mapData updated', mapData, 'userId:', userId, 'tokenPresent:', !!token);
-        }, [mapData, userId, token]);
+            console.debug('[MapContent] mapData updated', mapData, 'userId:', userIdNow, 'tokenPresent:', !!tokenNow);
+        }, [mapData, user?.id]);
 
         // Efecto para el bucle de actualización del mapa
         useEffect(() => {
+            const userIdNow = user?.id;
+            if (!userIdNow) return;
             fetchMapData(); // Cargar inmediatamente
 
             const timer = setInterval(fetchMapData, MAP_REFRESH_INTERVAL);
             return () => clearInterval(timer);
-        }, [fetchMapData]);
+        }, [user?.id]);
 
         // Efecto para redibujar el canvas cuando cambian los datos o el tamaño de la ventana
         useEffect(() => {
