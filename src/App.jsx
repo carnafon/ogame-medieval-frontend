@@ -14,14 +14,6 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 const GENERATION_INTERVAL_MS = 10000; 
 const MAP_REFRESH_INTERVAL = 10000; // 10 segundos para actualizar el mapa
 
-// Si los players vienen con lat/lon, mapearlos a la imagen de España.
-// Caja geográfica aproximada para la península ibérica (mainland Spain)
-const MAP_GEO_BBOX = {
-    minLat: 36.0, // sur
-    maxLat: 44.5, // norte
-    minLon: -9.5, // oeste
-    maxLon: 3.5    // este
-};
 
 const MAP_SIZE = 100; // Tamaño del mapa 100x100
 
