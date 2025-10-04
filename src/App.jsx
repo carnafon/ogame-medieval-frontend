@@ -473,20 +473,18 @@ function App() {
         // DEBUG: log mapData when it updates
         useEffect(() => {
             const tokenNow = localStorage.getItem('authToken');
-            const userIdNow = user?.id;
             // eslint-disable-next-line no-console
-            console.debug('[MapContent] mapData updated', mapData, 'userId:', userIdNow, 'tokenPresent:', !!tokenNow);
-        }, [mapData, user?.id]);
+            console.debug('[MapContent] mapData updated', mapData, 'userId:', userId, 'tokenPresent:', !!tokenNow);
+        }, [mapData, userId]);
 
         // Efecto para el bucle de actualización del mapa
         useEffect(() => {
-            const userIdNow = user?.id;
-            if (!userIdNow) return;
+            if (!userId) return;
             fetchMapData(); // Cargar inmediatamente
 
             const timer = setInterval(fetchMapData, MAP_REFRESH_INTERVAL);
             return () => clearInterval(timer);
-        }, [user?.id]);
+        }, [userId]);
 
         // Efecto para redibujar el canvas cuando cambian los datos o el tamaño de la ventana
         useEffect(() => {
