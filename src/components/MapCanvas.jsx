@@ -33,7 +33,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         if (!p) return;
         const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
         const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
-        if(p.is_current_user == false)
+        if(p.is_current_user === false)
           {activeId=p.id;}
         ctx.beginPath();
         ctx.arc(px, py, (cellSize * scale) / 3, 0, 2 * Math.PI);
