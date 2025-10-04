@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import MapGrid from './components/MapGrid';
+import React, { useState, useEffect, useCallback } from 'react';
 import MapPage from './components/MapPage';
 import { 
-    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus, Map, ChevronLeft
+    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus, Map
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN FRONTAL ---
@@ -13,9 +12,6 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 // Intervalo de tiempo para la generación de recursos (en milisegundos)
 // 10000 ms = 10 segundos
 const GENERATION_INTERVAL_MS = 10000; 
-const MAP_REFRESH_INTERVAL = 10000; // 10 segundos para actualizar el mapa
-
-
 const MAP_SIZE = 100; // Tamaño del mapa 100x100
 
 
