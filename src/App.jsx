@@ -390,9 +390,26 @@ function App() {
     }, []); // drawMap recibe userId como parámetro, no necesita dependencias
 
         // Función para simular/llamar a la API /map
+        const isFetchingRef = useRef(false);
+        const lastControllerRef = useRef(null);
+
         const fetchMapData = useCallback(async () => {
-            if (!token) return;
+            if (!token || !userId) {
+                // No hay token o usuario: limpiar datos y salir
+                setMapData({ players: [] });
+                setLoadingMap(false);
+                return;
+            }
+
+            // Evitar fetch concurrente
+            if (isFetchingRef.current) return;
+            isFetchingRef.current = true;
             setLoadingMap(true);
+
+            const controller = new AbortController();
+            lastControllerRef.current = controller;
+            const TIMEOUT_MS = 8000; // 8s timeout para evitar bloqueos
+            const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/map`, {
@@ -400,58 +417,55 @@ function App() {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    signal: controller.signal
                 });
 
                 if (!response.ok) {
-                    // Si el backend aún no tiene el endpoint /map, simulamos los datos.
                     if (response.status === 404) {
+                        // Endpoint no implementado: avisar y usar fallback
                         setUIMessage({ text: 'Endpoint /map no encontrado en el servidor. Usando datos simulados.', type: 'warning' });
-                        throw new Error('404'); 
+                        throw new Error('404');
                     }
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.message || 'Error al cargar el mapa.');
                 }
-                
-                const data = await response.json();
-                setMapData(data); // Esperamos { players: [...] }
-                setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
-                
-            } catch (error) {
-                console.warn("Error fetching map data, simulating:", error.message);
 
-                // --- Simulación de datos (Fallback) ---
+                const data = await response.json();
+                // Si la respuesta no contiene players, fallback
+                if (!data || !Array.isArray(data.players)) {
+                    throw new Error('Formato de mapa inválido');
+                }
+
+                setMapData(data);
+                setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
+
+            } catch (error) {
+                // Timeout o cualquier error: registrar y generar fallback inmediato
+                console.warn('Error fetching map data, using fallback simulation:', error && error.message);
+
                 const numOtherPlayers = 3;
-                // Usar setMapData con updater para leer el estado anterior de forma segura
                 setMapData(prev => {
                     const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
                     const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
 
                     if (simulatedPlayers.length === 0) {
-                        // Asegurar que el jugador actual siempre aparezca
                         simulatedPlayers.push({
                             id: userId,
                             x: Math.floor(Math.random() * MAP_SIZE),
                             y: Math.floor(Math.random() * MAP_SIZE)
                         });
                     } else {
-                        // Simular movimiento ligero del jugador actual
                         simulatedPlayers[0].x = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
                         simulatedPlayers[0].y = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
                     }
 
-                    // Generar otros jugadores (o mantener su posición simulada)
                     for (let i = 0; i < numOtherPlayers; i++) {
                         const id = `user-${i + 1}`;
                         let existingPlayer = prevPlayers.find(p => p.id === id);
                         if (!existingPlayer) {
-                            existingPlayer = {
-                                id: id,
-                                x: Math.floor(Math.random() * MAP_SIZE),
-                                y: Math.floor(Math.random() * MAP_SIZE)
-                            };
+                            existingPlayer = { id, x: Math.floor(Math.random() * MAP_SIZE), y: Math.floor(Math.random() * MAP_SIZE) };
                         } else {
-                            // Simular movimiento ligero de otros jugadores
                             existingPlayer.x = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
                             existingPlayer.y = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
                         }
@@ -460,12 +474,15 @@ function App() {
 
                     return { players: simulatedPlayers };
                 });
-                // --- Fin Simulación ---
-                
+
             } finally {
+                clearTimeout(timeoutId);
+                // limpiar controller referencia si coincide
+                if (lastControllerRef.current === controller) lastControllerRef.current = null;
+                isFetchingRef.current = false;
                 setLoadingMap(false);
             }
-    }, [token, userId]);
+        }, [token, userId]);
 
 
         // Efecto para el bucle de actualización del mapa
