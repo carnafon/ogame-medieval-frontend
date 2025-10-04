@@ -456,7 +456,7 @@ function App() {
                 // Estado de USUARIO LOGUEADO - Renderizado condicional por vista
                 <>
                     {currentView === 'home' && <HomeContent />}
-                    {currentView === 'map' && <MapPage user={user} setUIMessage={displayMessage} API_BASE_URL={API_BASE_URL} MAP_SIZE={MAP_SIZE} />}
+                    {currentView === 'map' && <MapPage user={user} setUIMessage={displayMessage} API_BASE_URL={API_BASE_URL} MAP_SIZE={MAP_SIZE} onBack={() => setCurrentView('home')} />}
                 </>
             ) : ( 
                 // Estado de NO LOGUEADO: Formulario de Autenticación 
