@@ -241,7 +241,14 @@ function App() {
             displayMessage('Debes iniciar sesión para construir.', 'error');
             return;
         }
-        
+        // Antes de construir, solicitar generación de recursos para aplicar producción pasiva pendiente
+        try {
+            await generateResources(storedToken);
+        } catch (err) {
+            // Si falla la actualización de recursos, mostrar aviso pero continuar para que el backend valide de todas formas
+            console.warn('No se pudo refrescar recursos antes de construir:', err && err.message);
+        }
+
         setIsLoading(true);
         displayMessage('Construyendo...', 'info');
 
