@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import MapGrid from './components/MapGrid';
 import { 
     Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus, Map, ChevronLeft
 } from 'lucide-react';
@@ -343,90 +344,9 @@ function App() {
    // --- COMPONENTE MAPA (MapContent) ---
 
     const MapContent = () => {
-        const canvasRef = useRef(null);
         const [mapData, setMapData] = useState({ players: [] });
         const [loadingMap, setLoadingMap] = useState(true);
         const token = localStorage.getItem('authToken');
-        
-        // Dibuja el estado actual de los jugadores en el canvas.
-    const userId = user?.id;
-
-        const drawMap = useCallback((players, userId) => {
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-
-            // Obtener tamaño real del canvas en CSS pixels
-            const rect = canvas.getBoundingClientRect();
-            const size = Math.min(rect.width, rect.height);
-            canvas.width = Math.floor(size * window.devicePixelRatio);
-            canvas.height = Math.floor(size * window.devicePixelRatio);
-            canvas.style.width = `${size}px`;
-            canvas.style.height = `${size}px`;
-
-            const ctx = canvas.getContext('2d');
-            // Escalar contexto para devicePixelRatio
-            ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-            
-            // Tamaño de la celda en píxeles
-            const cellSize = size / MAP_SIZE;
-            // Radio del punto del jugador (asegura visibilidad)
-            const pointRadius = Math.max(3, cellSize * 0.2); 
-
-            ctx.clearRect(0, 0, size, size);
-            console.log('Dibujando mapa con jugadores:', players);
-            // 1. Dibujar la cuadrícula de fondo (cada 10 unidades)
-            ctx.strokeStyle = '#4b5563'; // gray-600
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i <= MAP_SIZE; i += 10) {
-                const pos = i * cellSize;
-                // Vertical
-                ctx.beginPath();
-                ctx.moveTo(pos, 0);
-                ctx.lineTo(pos, size);
-                ctx.stroke();
-                // Horizontal
-                ctx.beginPath();
-                ctx.moveTo(0, pos);
-                ctx.lineTo(size, pos);
-                ctx.stroke();
-            }
-
-            // 2. Dibujar jugadores
-            players.forEach(player => {
-                let canvasX, canvasY;
-                if (typeof player.lat === 'number' && typeof player.lon === 'number') {
-                    // Mapear lat/lon dentro del bbox a coordenadas del canvas
-                    const { minLat, maxLat, minLon, maxLon } = MAP_GEO_BBOX;
-                    const lat = Math.max(minLat, Math.min(maxLat, player.lat));
-                    const lon = Math.max(minLon, Math.min(maxLon, player.lon));
-                    const nx = (lon - minLon) / (maxLon - minLon); // 0..1
-                    const ny = 1 - (lat - minLat) / (maxLat - minLat); // invertir y para canvas
-                    canvasX = (nx * MAP_SIZE + 0.5) * cellSize;
-                    canvasY = (ny * MAP_SIZE + 0.5) * cellSize;
-                } else {
-                    // Mapear (x, y) a píxeles. (0,0) abajo-izquierda.
-                    // Usamos (MAP_SIZE - y - 0.5) para invertir Y y centrar
-                    canvasX = (player.x + 0.5) * cellSize;
-                    canvasY = (MAP_SIZE - player.y - 0.5) * cellSize;
-                }
-
-                ctx.beginPath();
-                ctx.arc(canvasX, canvasY, pointRadius, 0, Math.PI * 2);
-
-                if (player.id === userId) {
-                    // Jugador actual: color verde
-                    ctx.fillStyle = '#10B981'; // Tailwind green-500
-                } else {
-                    // Otros jugadores: color azul
-                    ctx.fillStyle = '#3B82F6'; // Tailwind blue-500
-                }
-                ctx.fill();
-                ctx.strokeStyle = '#1F2937'; 
-                ctx.lineWidth = 0.5;
-                ctx.stroke();
-            });
-    }, []); // drawMap recibe userId como parámetro, no necesita dependencias
-
         // Función para simular/llamar a la API /map
         const isFetchingRef = useRef(false);
         const lastControllerRef = useRef(null);
@@ -493,14 +413,7 @@ function App() {
 
                 setMapData({ players });
                 setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
-                // Dibujar inmediatamente en el canvas
-                window.requestAnimationFrame(() => {
-                    try {
-                        drawMap(players, userId);
-                    } catch (e) {
-                        console.warn('drawMap failed:', e);
-                    }
-                });
+                // MapGrid se encargará de renderizar cuando mapData cambie
 
             } catch (error) {
                 // Timeout o cualquier error: registrar y generar fallback inmediato
@@ -544,7 +457,7 @@ function App() {
                 isFetchingRef.current = false;
                 setLoadingMap(false);
             }
-    }, [token, userId, drawMap]);
+    }, [token, userId]);
 
 
         // Efecto para el bucle de actualización del mapa
@@ -559,15 +472,15 @@ function App() {
         useEffect(() => {
             // Redibujar cuando cambian los datos del mapa
             const players = Array.isArray(mapData.players) ? mapData.players : [];
+            // MapGrid se encarga del renderizado cuando cambia mapData
             if (players.length > 0) {
-                drawMap(players, userId);
-                console.log(userId, players);
+                // nothing here; MapGrid will render the new players
             }
-            // Manejar resize
-            const handleResizeAndDraw = () => drawMap(players, userId);
-            window.addEventListener('resize', handleResizeAndDraw);
-            return () => window.removeEventListener('resize', handleResizeAndDraw);
-        }, [mapData, drawMap, userId]); 
+            // Manejar resize (no necesita re-dibujar manualmente; MapGrid responde a tamaño)
+            const handleResize = () => { /* noop, MapGrid handles its own resize */ };
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }, [mapData, userId]); 
 
     const myPlayer = mapData.players.find(p => p.id === userId) || {x: 'N/A', y: 'N/A'};
 
@@ -594,18 +507,8 @@ function App() {
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Contenedor del Mapa */}
                         <div className="md:w-3/4 flex justify-center items-center">
-                            <div className="relative w-full max-w-xl aspect-square">
-                                {/* Background map of Spain (jpg preferred, fallback to svg) */}
-                                <img
-                                    src="/spain.jpg"
-                                    alt="Mapa de España"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = '/spain.svg'; }}
-                                    className="absolute inset-0 w-full h-full object-contain opacity-30 pointer-events-none"
-                                />
-                                <canvas
-                                    ref={canvasRef}
-                                    className="relative w-full h-full border-4 border-gray-600 bg-transparent rounded-xl shadow-inner shadow-gray-700"
-                                ></canvas>
+                            <div className="relative w-full max-w-xl aspect-square border-4 border-gray-600 rounded-xl overflow-hidden">
+                                <MapGrid players={mapData.players} activeId={userId} mapSize={MAP_SIZE} bgImage="/spain.jpg" />
                             </div>
                         </div>
 
