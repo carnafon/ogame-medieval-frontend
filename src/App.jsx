@@ -383,7 +383,10 @@ function App() {
                 }
 
                 const data = await response.json();
-                // Aceptar varias formas posibles de respuesta:
+                // DEBUG: log raw server response
+                // eslint-disable-next-line no-console
+                console.debug('[Map] raw response', data);
+                 // Aceptar varias formas posibles de respuesta:
                 // - array directo -> [{id,x,y}, ...]
                 // - { players: [...] }
                 // - { playersList: [...] }
@@ -402,6 +405,10 @@ function App() {
                 // Extraer mapSize si el backend lo devuelve (mapSize, size o map_size)
                 const mapSizeFromServer = data && (data.mapSize || data.size || data.map_size);
                 const mapSize = Number.isFinite(mapSizeFromServer) ? mapSizeFromServer : MAP_SIZE;
+                
+                // DEBUG: show parsed values
+                // eslint-disable-next-line no-console
+                console.debug('[Map] parsed', { players, mapSize });
 
                 setMapData({ players, mapSize });
                 
@@ -415,13 +422,18 @@ function App() {
 
              } catch (error) {
                  // Timeout o cualquier error: registrar y generar fallback inmediato
-                 console.warn('Error fetching map data, using fallback simulation:', error && error.message);
+                // eslint-disable-next-line no-console
+                console.warn('Error fetching map data, using fallback simulation:', error && error.message);
 
                  const numOtherPlayers = 3;
+                // DEBUG: indicate we're entering fallback path
+                // eslint-disable-next-line no-console
+                console.debug('[Map] using fallback simulation, prev mapData:', prev);
+
                 setMapData(prev => {
-                    const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
-                    const currentMapSize = prev.mapSize || MAP_SIZE;
-                    const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
+                     const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
+                     const currentMapSize = prev.mapSize || MAP_SIZE;
+                     const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
 
                     if (simulatedPlayers.length === 0) {
                         simulatedPlayers.push({
@@ -457,7 +469,12 @@ function App() {
                  setLoadingMap(false);
              }
      }, [token, userId]);
-
+ 
+        // DEBUG: log mapData when it updates
+        useEffect(() => {
+            // eslint-disable-next-line no-console
+            console.debug('[MapContent] mapData updated', mapData, 'userId:', userId, 'tokenPresent:', !!token);
+        }, [mapData, userId, token]);
 
         // Efecto para el bucle de actualización del mapa
         useEffect(() => {
@@ -546,6 +563,13 @@ function App() {
                                         Cargando datos...
                                     </p>
                                 )}
+                                {/* DEBUG PANEL - visible in UI to inspect values */}
+                                <details className="mt-4 p-2 bg-gray-800 rounded text-xs text-gray-300">
+                                    <summary className="cursor-pointer text-sm text-gray-200">Depuración - mostrar datos del mapa</summary>
+                                    <div className="mt-2">
+                                        <pre className="whitespace-pre-wrap text-xs max-h-48 overflow-auto">{JSON.stringify({ mapData, userId, tokenPresent: !!localStorage.getItem('authToken'), userSummary: user ? { id: user.id, username: user.username, coords: { x: user.x_coord, y: user.y_coord } } : null }, null, 2)}</pre>
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </div>
