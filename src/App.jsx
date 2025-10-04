@@ -373,17 +373,37 @@ function App() {
                     signal: controller.signal
                 });
 
+                // DEBUG: log HTTP status and headers
+                // eslint-disable-next-line no-console
+                console.debug('[Map] HTTP', { status: response.status, ok: response.ok, headers: Object.fromEntries(response.headers.entries()) });
+
                 if (!response.ok) {
                     if (response.status === 404) {
                         // Endpoint no implementado: avisar y usar fallback
                         setUIMessage({ text: 'Endpoint /map no encontrado en el servidor. Usando datos simulados.', type: 'warning' });
                         throw new Error('404');
                     }
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Error al cargar el mapa.');
+                    // Try to extract error message safely
+                    let errorText = '';
+                    try {
+                        const txt = await response.text();
+                        errorText = txt;
+                    } catch (e) {
+                        errorText = `<unable to read response text: ${e.message}>`;
+                    }
+                    throw new Error(errorText || 'Error al cargar el mapa.');
                 }
-
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // JSON parse error: log body text
+                    let bodyText = '';
+                    try { bodyText = await response.text(); } catch (ex) { bodyText = `<unable to read body: ${ex.message}>`; }
+                    // eslint-disable-next-line no-console
+                    console.warn('[Map] JSON parse error, body:', bodyText);
+                    throw e;
+                }
                 // DEBUG: log raw server response
                 // eslint-disable-next-line no-console
                 console.debug('[Map] raw response', data);
@@ -411,6 +431,16 @@ function App() {
                     const y = typeof p.y === 'number' ? p.y : (typeof p.y_coord === 'number' ? p.y_coord : (p.y_coord ? Number(p.y_coord) : undefined));
                     return { id, x, y };
                 }).filter(Boolean);
+
+                // DEBUG: log rawPlayers and normalized players details
+                // eslint-disable-next-line no-console
+                console.debug('[Map] rawPlayers count:', rawPlayers.length, 'normalized count:', players.length);
+                // Log entries without valid coords
+                const missingCoords = players.filter(p => typeof p.x !== 'number' || typeof p.y !== 'number');
+                if (missingCoords.length > 0) {
+                    // eslint-disable-next-line no-console
+                    console.warn('[Map] players with missing coords:', missingCoords.slice(0,10));
+                }
 
                 // Extraer mapSize si el backend lo devuelve (mapSize, size o map_size)
                 const mapSizeFromServer = data && (data.mapSize || data.size || data.map_size);
