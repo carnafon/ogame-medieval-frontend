@@ -11,7 +11,7 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 // Intervalo de tiempo para la generación de recursos (en milisegundos)
 // 10000 ms = 10 segundos
 const GENERATION_INTERVAL_MS = 10000; 
-const MAP_REFRESH_INTERVAL = 50000; // 5 segundos para actualizar el mapa
+const MAP_REFRESH_INTERVAL = 10000; // 10 segundos para actualizar el mapa
 
 const MAP_SIZE = 100; // Tamaño del mapa 100x100
 
@@ -342,21 +342,27 @@ function App() {
         // Dibuja el estado actual de los jugadores en el canvas.
     const userId = user?.id;
 
-    const drawMap = useCallback((players, userId) => {
+        const drawMap = useCallback((players, userId) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
 
-            // Asegura que el canvas sea cuadrado y responsivo
-            const size = canvas.clientWidth;
-            canvas.width = size;
-            canvas.height = size;
+            // Obtener tamaño real del canvas en CSS pixels
+            const rect = canvas.getBoundingClientRect();
+            const size = Math.min(rect.width, rect.height);
+            canvas.width = Math.floor(size * window.devicePixelRatio);
+            canvas.height = Math.floor(size * window.devicePixelRatio);
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+
+            const ctx = canvas.getContext('2d');
+            // Escalar contexto para devicePixelRatio
+            ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
             
             // Tamaño de la celda en píxeles
             const cellSize = size / MAP_SIZE;
             // Radio del punto del jugador (asegura visibilidad)
             const pointRadius = Math.max(3, cellSize * 0.2); 
 
-            const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, size, size);
 
             // 1. Dibujar la cuadrícula de fondo (cada 10 unidades)
@@ -466,6 +472,14 @@ function App() {
 
                 setMapData({ players });
                 setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
+                // Dibujar inmediatamente en el canvas
+                window.requestAnimationFrame(() => {
+                    try {
+                        drawMap(players, userId);
+                    } catch (e) {
+                        console.warn('drawMap failed:', e);
+                    }
+                });
 
             } catch (error) {
                 // Timeout o cualquier error: registrar y generar fallback inmediato
@@ -522,13 +536,15 @@ function App() {
 
         // Efecto para redibujar el canvas cuando cambian los datos o el tamaño de la ventana
         useEffect(() => {
-            if (mapData.players.length > 0) {
-                // Redibujar el mapa. Se envuelve en un listener de resize para responsividad.
-                const handleResizeAndDraw = () => drawMap(mapData.players, userId);
-                handleResizeAndDraw();
-                window.addEventListener('resize', handleResizeAndDraw);
-                return () => window.removeEventListener('resize', handleResizeAndDraw);
+            // Redibujar cuando cambian los datos del mapa
+            const players = Array.isArray(mapData.players) ? mapData.players : [];
+            if (players.length > 0) {
+                drawMap(players, userId);
             }
+            // Manejar resize
+            const handleResizeAndDraw = () => drawMap(players, userId);
+            window.addEventListener('resize', handleResizeAndDraw);
+            return () => window.removeEventListener('resize', handleResizeAndDraw);
         }, [mapData, drawMap, userId]); 
 
     const myPlayer = mapData.players.find(p => p.id === userId) || {x: 'N/A', y: 'N/A'};
