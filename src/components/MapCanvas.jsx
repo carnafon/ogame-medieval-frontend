@@ -33,7 +33,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
         if (!p) return;
         const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
         const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
-        const jugActivo = null;
+        const jugActivo = 0;
         if(p.is_current_user === true)
           {jugActivo=p.id;}
         ctx.beginPath();
