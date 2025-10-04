@@ -31,8 +31,8 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
       // Dibujar jugadores
       (players).forEach((p) => {
         if (!p) return;
-        const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
-        const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
+        const px = p.x_coord  * cellSize * scale + offset.x + (cellSize * scale) / 2;
+        const py = p.y_coord  * cellSize * scale + offset.y  + (cellSize * scale) / 2;
         console.log("coorrdenada", px,py,p.id,p.x_coord,p.y_coord);
         let jugActivo = p.id;
         if(p.is_current_user === false)
