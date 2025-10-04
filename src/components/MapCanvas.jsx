@@ -31,8 +31,10 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
       // Dibujar jugadores
       (players || []).forEach((p) => {
         if (!p) return;
-        const px = p.x * cellSize * scale + offset.x + (cellSize * scale) / 2;
-        const py = p.y * cellSize * scale + offset.y + (cellSize * scale) / 2;
+        const px = p.x_coord  * cellSize * scale + offset.x_coord + (cellSize * scale) / 2;
+        const py = p.y_coord  * cellSize * scale + offset.y_coord  + (cellSize * scale) / 2;
+        if(p.is_current_user == false)
+          {activeId=p.id;}
         ctx.beginPath();
         ctx.arc(px, py, (cellSize * scale) / 3, 0, 2 * Math.PI);
         ctx.fillStyle = p.id === activeId ? "cyan" : "red";

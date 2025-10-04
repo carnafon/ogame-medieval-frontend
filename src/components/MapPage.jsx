@@ -23,7 +23,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, on
       .then((data) => {
         setMapData({
           
-          players: data.players || [],
+          players: data || [],
           mapSize: data.mapSize || MAP_SIZE,
         });
         setUIMessage && setUIMessage('Mapa cargado.', 'success');
