@@ -65,11 +65,11 @@ function App() {
 
     // --- Funciones de Utilidad ---
 
-    const displayMessage = (text, type = 'info') => {
+    const displayMessage = useCallback((text, type = 'info') => {
         setUIMessage({ text, type });
         // Opcional: limpiar el mensaje después de un tiempo
-        // setTimeout(() => setUIMessage({ text: '', type: 'info' }), 5000); 
-    };
+        // setTimeout(() => setUIMessage({ text: '', type: 'info' }), 5000);
+    }, []);
     
     // Función para manejar las cabeceras de la API
     const getAuthHeaders = useCallback((token) => ({
@@ -329,7 +329,9 @@ function App() {
         const token = localStorage.getItem('authToken');
         
         // Dibuja el estado actual de los jugadores en el canvas.
-        const drawMap = useCallback((players, userId) => {
+    const userId = user?.id;
+
+    const drawMap = useCallback((players, userId) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
 
@@ -385,7 +387,7 @@ function App() {
                 ctx.lineWidth = 0.5;
                 ctx.stroke();
             });
-        }, [user.id]); // Dependencia del ID del usuario para diferenciar colores
+    }, []); // drawMap recibe userId como parámetro, no necesita dependencias
 
         // Función para simular/llamar a la API /map
         const fetchMapData = useCallback(async () => {
@@ -414,49 +416,53 @@ function App() {
                 
             } catch (error) {
                 console.warn("Error fetching map data, simulating:", error.message);
-                
+
                 // --- Simulación de datos (Fallback) ---
-                const numOtherPlayers = 3; 
-                const simulatedPlayers = mapData.players.filter(p => p.id === user.id);
+                const numOtherPlayers = 3;
+                // Usar setMapData con updater para leer el estado anterior de forma segura
+                setMapData(prev => {
+                    const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
+                    const simulatedPlayers = prevPlayers.filter(p => p.id === userId);
 
-                if (simulatedPlayers.length === 0) {
-                    // Asegurar que el jugador actual siempre aparezca
-                    simulatedPlayers.push({ 
-                        id: user.id, 
-                        x: Math.floor(Math.random() * MAP_SIZE), 
-                        y: Math.floor(Math.random() * MAP_SIZE) 
-                    });
-                } else {
-                    // Simular movimiento ligero del jugador actual
-                    simulatedPlayers[0].x = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
-                    simulatedPlayers[0].y = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
-                }
-
-                // Generar otros jugadores (o mantener su posición simulada)
-                for (let i = 0; i < numOtherPlayers; i++) {
-                    const id = `user-${i + 1}`;
-                    let existingPlayer = mapData.players.find(p => p.id === id);
-                    if (!existingPlayer) {
-                         existingPlayer = {
-                            id: id,
-                            x: Math.floor(Math.random() * MAP_SIZE), 
+                    if (simulatedPlayers.length === 0) {
+                        // Asegurar que el jugador actual siempre aparezca
+                        simulatedPlayers.push({
+                            id: userId,
+                            x: Math.floor(Math.random() * MAP_SIZE),
                             y: Math.floor(Math.random() * MAP_SIZE)
-                        };
+                        });
                     } else {
-                        // Simular movimiento ligero de otros jugadores
-                        existingPlayer.x = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
-                        existingPlayer.y = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
+                        // Simular movimiento ligero del jugador actual
+                        simulatedPlayers[0].x = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].x + Math.floor(Math.random() * 3) - 1));
+                        simulatedPlayers[0].y = Math.max(0, Math.min(MAP_SIZE - 1, simulatedPlayers[0].y + Math.floor(Math.random() * 3) - 1));
                     }
-                    simulatedPlayers.push(existingPlayer);
-                }
-                
-                setMapData({ players: simulatedPlayers });
+
+                    // Generar otros jugadores (o mantener su posición simulada)
+                    for (let i = 0; i < numOtherPlayers; i++) {
+                        const id = `user-${i + 1}`;
+                        let existingPlayer = prevPlayers.find(p => p.id === id);
+                        if (!existingPlayer) {
+                            existingPlayer = {
+                                id: id,
+                                x: Math.floor(Math.random() * MAP_SIZE),
+                                y: Math.floor(Math.random() * MAP_SIZE)
+                            };
+                        } else {
+                            // Simular movimiento ligero de otros jugadores
+                            existingPlayer.x = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.x + Math.floor(Math.random() * 3) - 1));
+                            existingPlayer.y = Math.max(0, Math.min(MAP_SIZE - 1, existingPlayer.y + Math.floor(Math.random() * 3) - 1));
+                        }
+                        simulatedPlayers.push(existingPlayer);
+                    }
+
+                    return { players: simulatedPlayers };
+                });
                 // --- Fin Simulación ---
                 
             } finally {
                 setLoadingMap(false);
             }
-        }, [token, getAuthHeaders, displayMessage, user.id, mapData.players]);
+        }, [token, getAuthHeaders, displayMessage, userId]);
 
 
         // Efecto para el bucle de actualización del mapa
@@ -471,14 +477,14 @@ function App() {
         useEffect(() => {
             if (mapData.players.length > 0) {
                 // Redibujar el mapa. Se envuelve en un listener de resize para responsividad.
-                const handleResizeAndDraw = () => drawMap(mapData.players, user.id);
+                const handleResizeAndDraw = () => drawMap(mapData.players, userId);
                 handleResizeAndDraw();
                 window.addEventListener('resize', handleResizeAndDraw);
                 return () => window.removeEventListener('resize', handleResizeAndDraw);
             }
-        }, [mapData, drawMap, user.id]); 
+        }, [mapData, drawMap, userId]); 
 
-        const myPlayer = mapData.players.find(p => p.id === user.id) || {x: 'N/A', y: 'N/A'};
+    const myPlayer = mapData.players.find(p => p.id === userId) || {x: 'N/A', y: 'N/A'};
 
 
         return (
