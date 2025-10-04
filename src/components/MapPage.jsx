@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MapGrid from './MapGrid';
+import MapCanvas from './MapCanvas';
 import { Loader, Map as MapIcon } from 'lucide-react';
 
 // MapPage: fetch once on mount and on user click (Refresh). Does not auto-refresh on interval.
@@ -133,6 +134,12 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, on
         <div className="flex-1 flex justify-center items-center">
           <div className="relative w-full max-w-xl aspect-square border-4 border-gray-600 rounded-xl overflow-hidden">
             <MapGrid players={mapData.players} activeId={userId} mapSize={mapData.mapSize || MAP_SIZE} bgImage="/spain.jpg" fillCells={true} />
+          </div>
+        </div>
+
+          <div className="relative w-full max-w-xl aspect-square border-4 border-gray-600 rounded-xl overflow-hidden">
+            {/* Nuevo canvas interactivo */}
+            <MapCanvas players={mapData.players} activeId={userId} gridSize={mapData.mapSize || MAP_SIZE} cellSize={10} />
           </div>
         </div>
 
