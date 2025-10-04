@@ -253,8 +253,12 @@ function App() {
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.message || 'Fallo al construir.');
+                 const errData = await response.json().catch(() => ({}));
+                 // Mostrar en consola el cuerpo de error para depuración
+                 console.error('Build failed response', { status: response.status, body: errData, buildingType });
+                 const serverMessage = errData && errData.message ? errData.message : 'Fallo al construir.';
+                 displayMessage(`Error: ${serverMessage}`, 'error');
+                 throw new Error(serverMessage);
             }
             
             const data = await response.json();
