@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import MapCanvas from './components/MapCanvas';
+import MapCanvas from './MapCanvas';
 import { Loader, Map as MapIcon } from 'lucide-react';
 
 export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, onBack }) {
