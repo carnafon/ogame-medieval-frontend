@@ -3,7 +3,7 @@ import MapGrid from './MapGrid';
 import { Loader, Map as MapIcon } from 'lucide-react';
 
 // MapPage: fetch once on mount and on user click (Refresh). Does not auto-refresh on interval.
-export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE }) {
+export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, onBack }) {
   const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
   const [loadingMap, setLoadingMap] = useState(false);
   const isFetchingRef = useRef(false);
@@ -112,12 +112,17 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const myPlayer = (mapData.players || []).find(p => p.id === userId) || { x: 'N/A', y: 'N/A' };
+  const myPlayer = (mapData.players || []).find(p => String(p.id) === String(userId)) || { x: 'N/A', y: 'N/A' };
 
   return (
     <div className="p-4 bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-white flex items-center"><MapIcon className="w-5 h-5 mr-2"/>Mapa Global</h2>
+        <div className="flex items-center gap-3">
+          <button onClick={() => onBack && onBack()} className="text-cyan-400 hover:text-cyan-300 font-bold">
+            ← Volver
+          </button>
+          <h2 className="text-xl font-bold text-white flex items-center"><MapIcon className="w-5 h-5 mr-2"/>Mapa Global</h2>
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchMapData} className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded">Refrescar</button>
           {loadingMap && <Loader className="w-5 h-5 text-yellow-400 animate-spin" />}
