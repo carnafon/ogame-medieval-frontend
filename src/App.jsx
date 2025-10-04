@@ -561,6 +561,7 @@ function App() {
             const players = Array.isArray(mapData.players) ? mapData.players : [];
             if (players.length > 0) {
                 drawMap(players, userId);
+                console.log(userId, players);
             }
             // Manejar resize
             const handleResizeAndDraw = () => drawMap(players, userId);
