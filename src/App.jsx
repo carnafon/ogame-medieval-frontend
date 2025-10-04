@@ -392,16 +392,25 @@ function App() {
                 // - { players: [...] }
                 // - { playersList: [...] }
                 // - { map: [...] }
-                let players = [];
+                let rawPlayers = [];
                 if (Array.isArray(data)) {
-                    players = data;
+                    rawPlayers = data;
                 } else if (data && Array.isArray(data.players)) {
-                    players = data.players;
+                    rawPlayers = data.players;
                 } else if (data && Array.isArray(data.playersList)) {
-                    players = data.playersList;
+                    rawPlayers = data.playersList;
                 } else if (data && Array.isArray(data.map)) {
-                    players = data.map;
+                    rawPlayers = data.map;
                 }
+
+                // Normalize player coords: accept {x,y} or {x_coord,y_coord}
+                const players = rawPlayers.map(p => {
+                    if (!p) return null;
+                    const id = p.id || p.userId || p.username || null;
+                    const x = typeof p.x === 'number' ? p.x : (typeof p.x_coord === 'number' ? p.x_coord : (p.x_coord ? Number(p.x_coord) : undefined));
+                    const y = typeof p.y === 'number' ? p.y : (typeof p.y_coord === 'number' ? p.y_coord : (p.y_coord ? Number(p.y_coord) : undefined));
+                    return { id, x, y };
+                }).filter(Boolean);
 
                 // Extraer mapSize si el backend lo devuelve (mapSize, size o map_size)
                 const mapSizeFromServer = data && (data.mapSize || data.size || data.map_size);
@@ -411,6 +420,9 @@ function App() {
                 // eslint-disable-next-line no-console
                 console.debug('[Map] parsed', { players, mapSize });
 
+                // DEBUG: show normalized players
+                // eslint-disable-next-line no-console
+                console.debug('[Map] normalized players', players);
                 setMapData({ players, mapSize });
                 
                 if (!players || !Array.isArray(players)) {
@@ -574,12 +586,28 @@ function App() {
                                     </p>
                                 )}
                                 {/* DEBUG PANEL - visible in UI to inspect values */}
-                                <details className="mt-4 p-2 bg-gray-800 rounded text-xs text-gray-300">
+                                <div className="mt-4">
+                                    <button onClick={() => {
+                                        const uId = userId || (user && user.id) || 'me';
+                                        const sample = {
+                                            players: [
+                                                { id: uId, x: Math.floor((mapData.mapSize||MAP_SIZE)/2), y: Math.floor((mapData.mapSize||MAP_SIZE)/2) },
+                                                { id: 'user-1', x: 10, y: 20 },
+                                                { id: 'user-2', x: 60, y: 30 },
+                                                { id: 'user-3', x: 80, y: 70 }
+                                            ],
+                                            mapSize: mapData.mapSize || MAP_SIZE
+                                        };
+                                        setMapData(sample);
+                                    }} className="mb-2 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded">Simular mapa</button>
+
+                                    <details className="p-2 bg-gray-800 rounded text-xs text-gray-300">
                                     <summary className="cursor-pointer text-sm text-gray-200">Depuración - mostrar datos del mapa</summary>
                                     <div className="mt-2">
                                         <pre className="whitespace-pre-wrap text-xs max-h-48 overflow-auto">{JSON.stringify({ mapData, userId, tokenPresent: !!localStorage.getItem('authToken'), userSummary: user ? { id: user.id, username: user.username, coords: { x: user.x_coord, y: user.y_coord } } : null }, null, 2)}</pre>
                                     </div>
-                                </details>
+                                    </details>
+                                </div>
                             </div>
                         </div>
                     </div>
