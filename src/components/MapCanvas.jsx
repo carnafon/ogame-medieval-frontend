@@ -8,7 +8,8 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-
+    console.log("Players to draw:", players);
+   
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -75,7 +76,7 @@ export default function MapCanvas({ players = [], activeId, gridSize = 100, cell
     canvas.addEventListener("mousedown", onMouseDown);
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mouseup", onMouseUp);
-    canvas.addEventListener("wheel", onWheel);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
       canvas.removeEventListener("mousedown", onMouseDown);
