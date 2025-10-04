@@ -373,7 +373,7 @@ function App() {
             const pointRadius = Math.max(3, cellSize * 0.2); 
 
             ctx.clearRect(0, 0, size, size);
-
+            console.log('Dibujando mapa con jugadores:', players);
             // 1. Dibujar la cuadrícula de fondo (cada 10 unidades)
             ctx.strokeStyle = '#4b5563'; // gray-600
             ctx.lineWidth = 0.5;
