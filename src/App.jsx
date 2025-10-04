@@ -336,8 +336,8 @@ function App() {
    // --- COMPONENTE MAPA (MapContent) ---
 
     const MapContent = () => {
-        const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
-        const [loadingMap, setLoadingMap] = useState(true);
+    const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
+    const [loadingMap, setLoadingMap] = useState(false);
         const userId = user?.id;
         // Función para simular/llamar a la API /map
         const isFetchingRef = useRef(false);
@@ -484,6 +484,14 @@ function App() {
 
             const timer = setInterval(fetchMapData, MAP_REFRESH_INTERVAL);
             return () => clearInterval(timer);
+        }, [userId]);
+
+        // Si no hay userId, asegurarnos de que no quede el spinner de carga
+        useEffect(() => {
+            if (!userId) {
+                setLoadingMap(false);
+                setMapData({ players: [], mapSize: MAP_SIZE });
+            }
         }, [userId]);
 
         // Efecto para redibujar el canvas cuando cambian los datos o el tamaño de la ventana
