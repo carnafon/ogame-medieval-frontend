@@ -43,7 +43,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE }) 
 
       if (!response.ok) {
         if (response.status === 404) {
-          setUIMessage && setUIMessage({ text: 'Endpoint /map no encontrado. Usando datos simulados.', type: 'warning' });
+          setUIMessage && setUIMessage('Endpoint /map no encontrado. Usando datos simulados.', 'warning');
           throw new Error('404');
         }
         let errorText = '';
@@ -79,8 +79,8 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE }) 
       const mapSizeFromServer = data && (data.mapSize || data.size || data.map_size);
       const mapSize = Number.isFinite(mapSizeFromServer) ? mapSizeFromServer : MAP_SIZE;
 
-      setMapData({ players, mapSize });
-      setUIMessage && setUIMessage({ text: 'Mapa cargado.', type: 'success' });
+  setMapData({ players, mapSize });
+  setUIMessage && setUIMessage('Mapa cargado.', 'success');
 
     } catch (err) {
       console.warn('[MapPage] fetch error, using fallback:', err && err.message);
@@ -91,7 +91,7 @@ export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE }) 
         sample.push({ id: 'user-1', x: 10, y: 20 }, { id: 'user-2', x: 60, y: 30 });
         return { players: sample, mapSize: currentMapSize };
       });
-      setUIMessage && setUIMessage({ text: 'Usando datos simulados (map fetch falló).', type: 'warning' });
+  setUIMessage && setUIMessage('Usando datos simulados (map fetch falló).', 'warning');
     } finally {
       clearTimeout(timeoutId);
       if (lastControllerRef.current === controller) lastControllerRef.current = null;
