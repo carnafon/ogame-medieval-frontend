@@ -428,7 +428,7 @@ function App() {
                  const numOtherPlayers = 3;
                 // DEBUG: indicate we're entering fallback path
                 // eslint-disable-next-line no-console
-                console.debug('[Map] using fallback simulation, prev mapData:', prev);
+                console.debug('[Map] using fallback simulation, current mapData:', mapData);
 
                 setMapData(prev => {
                      const prevPlayers = Array.isArray(prev.players) ? prev.players : [];
