@@ -467,7 +467,7 @@ function App() {
                  isFetchingRef.current = false;
                  setLoadingMap(false);
              }
-    }, [token, userId, mapData]);
+    }, [token, userId]);
  
         // DEBUG: log mapData when it updates
         useEffect(() => {
