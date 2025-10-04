@@ -13,6 +13,15 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 const GENERATION_INTERVAL_MS = 10000; 
 const MAP_REFRESH_INTERVAL = 10000; // 10 segundos para actualizar el mapa
 
+// Si los players vienen con lat/lon, mapearlos a la imagen de España.
+// Caja geográfica aproximada para la península ibérica (mainland Spain)
+const MAP_GEO_BBOX = {
+    minLat: 36.0, // sur
+    maxLat: 44.5, // norte
+    minLon: -9.5, // oeste
+    maxLon: 3.5    // este
+};
+
 const MAP_SIZE = 100; // Tamaño del mapa 100x100
 
 
@@ -384,10 +393,22 @@ function App() {
 
             // 2. Dibujar jugadores
             players.forEach(player => {
-                // Mapear (x, y) a píxeles. (0,0) abajo-izquierda.
-                // Usamos (MAP_SIZE - y - 0.5) para invertir Y y centrar
-                const canvasX = (player.x + 0.5) * cellSize;
-                const canvasY = (MAP_SIZE - player.y - 0.5) * cellSize; 
+                let canvasX, canvasY;
+                if (typeof player.lat === 'number' && typeof player.lon === 'number') {
+                    // Mapear lat/lon dentro del bbox a coordenadas del canvas
+                    const { minLat, maxLat, minLon, maxLon } = MAP_GEO_BBOX;
+                    const lat = Math.max(minLat, Math.min(maxLat, player.lat));
+                    const lon = Math.max(minLon, Math.min(maxLon, player.lon));
+                    const nx = (lon - minLon) / (maxLon - minLon); // 0..1
+                    const ny = 1 - (lat - minLat) / (maxLat - minLat); // invertir y para canvas
+                    canvasX = (nx * MAP_SIZE + 0.5) * cellSize;
+                    canvasY = (ny * MAP_SIZE + 0.5) * cellSize;
+                } else {
+                    // Mapear (x, y) a píxeles. (0,0) abajo-izquierda.
+                    // Usamos (MAP_SIZE - y - 0.5) para invertir Y y centrar
+                    canvasX = (player.x + 0.5) * cellSize;
+                    canvasY = (MAP_SIZE - player.y - 0.5) * cellSize;
+                }
 
                 ctx.beginPath();
                 ctx.arc(canvasX, canvasY, pointRadius, 0, Math.PI * 2);
@@ -573,10 +594,15 @@ function App() {
                         {/* Contenedor del Mapa */}
                         <div className="md:w-3/4 flex justify-center items-center">
                             <div className="relative w-full max-w-xl aspect-square">
-                                {/* Background map of Spain */}
-                                <img src="/spain.jpg" alt="Mapa de España" className="absolute inset-0 w-full h-full object-contain opacity-30 pointer-events-none" />
-                                <canvas 
-                                    ref={canvasRef} 
+                                {/* Background map of Spain (jpg preferred, fallback to svg) */}
+                                <img
+                                    src="/spain.jpg"
+                                    alt="Mapa de España"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = '/spain.svg'; }}
+                                    className="absolute inset-0 w-full h-full object-contain opacity-30 pointer-events-none"
+                                />
+                                <canvas
+                                    ref={canvasRef}
                                     className="relative w-full h-full border-4 border-gray-600 bg-transparent rounded-xl shadow-inner shadow-gray-700"
                                 ></canvas>
                             </div>
