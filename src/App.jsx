@@ -111,7 +111,7 @@ function App() {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders]);
+    }, [getAuthHeaders, displayMessage]);
 
     // Efecto 1: Comprobación de sesión al inicio
     useEffect(() => {
@@ -164,7 +164,7 @@ function App() {
             }
             return false;
         }
-    }, [getAuthHeaders]); // Dependencia de getAuthHeaders
+    }, [getAuthHeaders, displayMessage]); // Dependencia de getAuthHeaders y displayMessage
 
     
     // Efecto 2: Generación periódica de recursos
@@ -397,13 +397,16 @@ function App() {
             try {
                 const response = await fetch(`${API_BASE_URL}/map`, {
                     method: 'GET',
-                    headers: getAuthHeaders(token)
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
 
                 if (!response.ok) {
                     // Si el backend aún no tiene el endpoint /map, simulamos los datos.
                     if (response.status === 404) {
-                        displayMessage('Endpoint /map no encontrado en el servidor. Usando datos simulados.', 'warning');
+                        setUIMessage({ text: 'Endpoint /map no encontrado en el servidor. Usando datos simulados.', type: 'warning' });
                         throw new Error('404'); 
                     }
                     const errorData = await response.json();
@@ -412,7 +415,7 @@ function App() {
                 
                 const data = await response.json();
                 setMapData(data); // Esperamos { players: [...] }
-                displayMessage('Mapa actualizado.', 'info');
+                setUIMessage({ text: 'Mapa actualizado.', type: 'info' });
                 
             } catch (error) {
                 console.warn("Error fetching map data, simulating:", error.message);
@@ -462,7 +465,7 @@ function App() {
             } finally {
                 setLoadingMap(false);
             }
-        }, [token, getAuthHeaders, displayMessage, userId]);
+    }, [token, userId]);
 
 
         // Efecto para el bucle de actualización del mapa
