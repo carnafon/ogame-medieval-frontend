@@ -12,9 +12,9 @@ export default function MapCanvas({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
 
-  const mapPixelSize = gridSize * cellSize; // tamaño real del mapa en px
+  const mapPixelSize = gridSize * cellSize; // tamaño lógico del mapa en px
 
-  // 🔹 Ajustar dimensiones del canvas al contenedor
+  // 🔹 Resize responsive + ajuste inicial para encajar el mapa completo
   useEffect(() => {
     const resize = () => {
       if (canvasRef.current) {
@@ -23,7 +23,6 @@ export default function MapCanvas({
         const height = parent.clientHeight || width;
         setDimensions({ width, height });
 
-        // Ajuste inicial: encajar el mapa entero en pantalla
         const initialScale = Math.min(width / mapPixelSize, height / mapPixelSize);
         setScale(initialScale);
         setOffset({ x: 0, y: 0 });
@@ -34,7 +33,17 @@ export default function MapCanvas({
     return () => window.removeEventListener("resize", resize);
   }, [mapPixelSize]);
 
-  // 🔹 Dibujar mapa + jugadores
+  // 🔹 Función clamp para que no se salga de la cuadrícula
+  const clampOffset = (x, y, newScale = scale) => {
+    const maxOffsetX = dimensions.width - mapPixelSize * newScale;
+    const maxOffsetY = dimensions.height - mapPixelSize * newScale;
+    return {
+      x: Math.min(0, Math.max(maxOffsetX, x)),
+      y: Math.min(0, Math.max(maxOffsetY, y)),
+    };
+  };
+
+  // 🔹 Dibujar cuadrícula y jugadores
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -81,32 +90,22 @@ export default function MapCanvas({
 
       ctx.beginPath();
       ctx.arc(px, py, (cellSize * scale) / 3, 0, 2 * Math.PI);
-      ctx.fillStyle = p.is_current_user ? "cyan" : "red";
+      ctx.fillStyle = p.id === activeId ? "cyan" : "red";
       ctx.fill();
 
       ctx.fillStyle = "white";
       ctx.font = `${12 * scale}px sans-serif`;
       ctx.fillText(p.username || p.id, px + 5, py - 5);
     });
-  }, [players, offset, scale, gridSize, cellSize, dimensions]);
+  }, [players, offset, scale, gridSize, cellSize, dimensions, activeId]);
 
-  // 🔹 Pan & Zoom con ratón y táctil
+  // 🔹 Pan & Zoom (ratón + táctil)
   useEffect(() => {
     const canvas = canvasRef.current;
     let isDragging = false;
     let lastPos = { x: 0, y: 0 };
     let lastTouchDist = null;
 
-    const clampOffset = (x, y, newScale = scale) => {
-      const maxOffsetX = dimensions.width - mapPixelSize * newScale;
-      const maxOffsetY = dimensions.height - mapPixelSize * newScale;
-      return {
-        x: Math.min(0, Math.max(maxOffsetX, x)),
-        y: Math.min(0, Math.max(maxOffsetY, y)),
-      };
-    };
-
-    // 🖱️ Ratón
     const onMouseDown = (e) => {
       isDragging = true;
       lastPos = { x: e.clientX, y: e.clientY };
@@ -126,14 +125,16 @@ export default function MapCanvas({
       e.preventDefault();
       const zoom = e.deltaY < 0 ? 1.1 : 0.9;
       const newScale = Math.min(
-        dimensions.width / cellSize,
-        Math.max(Math.min(dimensions.width, dimensions.height) / mapPixelSize, scale * zoom)
+        3, // máximo zoom ×3
+        Math.max(
+          Math.min(dimensions.width, dimensions.height) / mapPixelSize, // mínimo: encajar todo
+          scale * zoom
+        )
       );
       setScale(newScale);
       setOffset((prev) => clampOffset(prev.x, prev.y, newScale));
     };
 
-    // 📱 Touch
     const onTouchStart = (e) => {
       if (e.touches.length === 1) {
         isDragging = true;
@@ -160,8 +161,11 @@ export default function MapCanvas({
         if (lastTouchDist) {
           const zoom = newDist > lastTouchDist ? 1.05 : 0.95;
           const newScale = Math.min(
-            dimensions.width / cellSize,
-            Math.max(Math.min(dimensions.width, dimensions.height) / mapPixelSize, scale * zoom)
+            3,
+            Math.max(
+              Math.min(dimensions.width, dimensions.height) / mapPixelSize,
+              scale * zoom
+            )
           );
           setScale(newScale);
           setOffset((prev) => clampOffset(prev.x, prev.y, newScale));
@@ -175,7 +179,6 @@ export default function MapCanvas({
       lastTouchDist = null;
     };
 
-    // Eventos
     canvas.addEventListener("mousedown", onMouseDown);
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mouseup", onMouseUp);
@@ -197,12 +200,34 @@ export default function MapCanvas({
     };
   }, [scale, dimensions, mapPixelSize, cellSize]);
 
+  // 🔹 Función para centrar en el jugador activo
+  const centerOnActive = () => {
+    const player = players.find((p) => p.id === activeId);
+    if (!player) return;
+
+    const px = player.x_coord * cellSize * scale + (cellSize * scale) / 2;
+    const py = player.y_coord * cellSize * scale + (cellSize * scale) / 2;
+
+    const centeredOffset = {
+      x: dimensions.width / 2 - px,
+      y: dimensions.height / 2 - py,
+    };
+
+    setOffset(clampOffset(centeredOffset.x, centeredOffset.y, scale));
+  };
+
   return (
-    <div className="w-full h-[80vh] flex justify-center items-center">
+    <div className="w-full h-[80vh] flex flex-col items-center justify-center relative">
       <canvas
         ref={canvasRef}
         className="border border-gray-500 rounded-lg bg-black w-full h-full"
       />
+      <button
+        onClick={centerOnActive}
+        className="absolute top-2 right-2 px-3 py-1 bg-blue-600 text-white text-sm rounded shadow hover:bg-blue-700"
+      >
+        Centrar jugador
+      </button>
     </div>
   );
 }
