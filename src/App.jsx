@@ -15,7 +15,13 @@ const GENERATION_INTERVAL_MS = 10000;
 const MAP_SIZE = 100; // Tamaño del mapa 100x100
 
 
-
+// Definiciones de Facciones (NUEVO)
+const FACTIONS = [
+    { id: '1', name: 'Celtas', description: 'Adoremos al sol y las piedras.', color: 'text-yellow-400' },
+    { id: '2', name: 'Vascones', description: 'Gora Euskadi.', color: 'text-green-400' },
+    { id: '3', name: 'Andalusíes', description: 'Ala es grande.', color: 'text-gray-400' },
+    { id: '4', name: 'Fenicios', description: 'Comercio sin fin.', color: 'text-red-400' },
+];
 
 // Definiciones de Edificios (adaptadas del código que proporcionaste)
 const BUILDING_DEFINITIONS = {
@@ -58,6 +64,8 @@ function App() {
     const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [uiMessage, setUIMessage] = useState({ text: 'Inicia sesión o regístrate.', type: 'info' });
+
+     const [faction, setFaction] = useState(FACTIONS[0].id); // Estado para la facción, inicia con la primera opción
 
     // Estado de Navegación: 'home' o 'map'
     const [currentView, setCurrentView] = useState('home'); 
@@ -497,6 +505,26 @@ function App() {
                             required 
                             className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500" 
                         /> 
+
+
+                            {/* NUEVO: Selector de Facciones (solo visible en Registro) */}
+                            {isRegistering && (
+                                <select
+                                    value={faction}
+                                    onChange={(e) => setFaction(e.target.value)}
+                                    required
+                                    className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>-- Selecciona tu Faccion --</option>
+                                    {FACTIONS.map((f) => (
+                                        <option key={f.id} value={f.id}>
+                                            {f.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+
                         <button  
                             type="submit"  
                             disabled={isLoading} 
