@@ -395,7 +395,6 @@ function App() {
             <main className="grid grid-cols-1 lg:grid-cols-2 gap-8"> 
                 {/* Panel de Edificios Construidos */} 
                 <Card title="Edificios Actuales" icon={Home}> 
-                    console.log(buildings);
                     {buildings.length === 0 ? ( 
                         <p className="text-gray-400">Aún no tienes edificios. ¡Construye uno!</p> 
                     ) : ( 
@@ -555,7 +554,7 @@ function App() {
             )} 
 
             <footer className="text-center mt-12 text-gray-500 text-sm"> 
-                <p>Juego de Comercio Medieval desarrollado con React y Tailwind CSS.</p> 
+                <p>Ogapatrihero.</p> 
             </footer> 
         </div> 
     ); 
