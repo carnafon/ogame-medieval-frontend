@@ -107,12 +107,14 @@ function App() {
             // Actualiza estados con los datos del usuario
             setUser(data.user);
             setEntity({
-                 id: data.user.id,
-                 faction_id: data.user.faction_id,
-                 faction_name: data.user.faction_name,
-                  x_coord: data.user.x_coord,
-                  y_coord: data.user.y_coord,
-                 resources: data.user.resources || {},
+                    id: data.entity.id,
+                    faction_id: data.entity.faction_id,
+                    faction_name: data.entity.faction_name,
+                    x_coord: data.entity.x_coord,
+                    y_coord: data.entity.y_coord,
+                    resources: data.entity.resources || { wood: 0, stone: 0, food: 0 },
+                    current_population: data.entity.current_population || 0,
+                    max_population: data.entity.max_population || 0,
                 });
             setBuildings(data.buildings || []); 
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
