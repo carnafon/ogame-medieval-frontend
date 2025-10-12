@@ -269,6 +269,9 @@ function App() {
             console.warn('No se pudo refrescar recursos antes de construir:', err && err.message);
         }
 
+        const currentBuilding = buildings.find(b => b.type === buildingType);
+        const nextLevel = (currentBuilding?.level || 0) + 1;
+
         setIsLoading(true);
         displayMessage('Construyendo...', 'info');
 
@@ -276,7 +279,7 @@ function App() {
             const response = await fetch(`${API_BASE_URL}/build`, {
                 method: 'POST',
                 headers: getAuthHeaders(storedToken),
-                body: JSON.stringify({ buildingType,entity})
+                body: JSON.stringify({ buildingType,entity,targetLevel: nextLevel})
             });
 
             if (!response.ok) {
@@ -407,7 +410,7 @@ function App() {
                                             {def && <def.icon className="w-5 h-5 text-yellow-400" />} 
                                             <span className="font-medium text-white">{def ? def.name : b.type}</span> 
                                         </div> 
-                                        <span className="text-lg font-bold text-cyan-300">Nivel {b.count}</span> 
+                                        <span className="text-lg font-bold text-cyan-300">Nivel {b.level}</span> 
                                     </li> 
                                 ); 
                             })} 
@@ -418,31 +421,34 @@ function App() {
                 {/* SECCIÓN DE CONSTRUCCIÓN */} 
                 <Card title="Opciones de Construcción" icon={Factory}> 
                     {Object.entries(BUILDING_DEFINITIONS).map(([type, details]) => { 
-                        const count = buildings.find(b => b.type === type)?.count || 0; 
+                        const currentBuilding  = buildings.find(b => b.type === type);
+                        const currentLevel = currentBuilding ? currentBuilding?.level : 0;
+                        const nextLevel = currentLevel + 1;
+                        const nextLevelCost=building?.nextLevelCost || details.cost;
                         return ( 
                         <div key={type} className="border border-gray-700 bg-gray-700/50 rounded-xl p-4 shadow-lg"> 
-                            <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {count + 1})</h4> 
+                            <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {currentLevel})</h4> 
                             <p className="text-sm text-gray-400 mb-3">{details.description}</p> 
                             
-                            <p className="font-semibold text-gray-300 text-sm"> 
-                                Costo:  
-                                {details.cost.wood > 0 && ` | Madera: ${details.cost.wood}`} 
-                                {details.cost.stone > 0 && ` | Piedra: ${details.cost.stone}`} 
-                                {details.cost.food > 0 && ` | Comida: ${details.cost.food}`} 
-                            </p> 
+                            <p className="font-semibold text-gray-300 text-sm">
+                         Coste para nivel {nextLevel}:
+                        {nextLevelCost.wood > 0 && ` | Madera: ${nextLevelCost.wood}`}
+                         {nextLevelCost.stone > 0 && ` | Piedra: ${nextLevelCost.stone}`}
+                   {    nextLevelCost.food > 0 && ` | Comida: ${nextLevelCost.food}`}
+                    </p>
 
                             <button  
                                 onClick={() => handleBuild(type)}  
-                                disabled={!canBuild(details.cost) || isLoading} 
+                                disabled={!canBuild(nextLevelCost) || isLoading} 
                                 className={`mt-3 w-full py-2 font-bold rounded-lg transition-all ${ 
-                                    canBuild(details.cost) && !isLoading  
+                                    canBuild(nextLevelCost) && !isLoading  
                                         ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-500/30 text-white'  
                                         : 'bg-gray-600 text-gray-400 cursor-not-allowed' 
                                 }`} 
                             > 
                                 {isLoading ? 'Cargando...' : `Construir 1 ${details.name}`} 
                             </button> 
-                            {!canBuild(details.cost) && <p className="text-xs text-center text-red-400 mt-2">Recursos insuficientes.</p>} 
+                            {!canBuild(nextLevelCost) && <p className="text-xs text-center text-red-400 mt-2">Recursos insuficientes.</p>} 
                         </div> 
                         )})} 
                 </Card> 
