@@ -102,6 +102,7 @@ function App() {
             }
             
             const data = await response.json();
+            console.log('Respuesta /me:', data);
             
             // Actualiza estados con los datos del usuario
             setUser(data.user);
