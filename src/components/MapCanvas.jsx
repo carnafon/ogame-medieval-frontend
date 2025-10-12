@@ -171,12 +171,62 @@ export default function MapCanvas({
     setOffset(clampOffset(centerX - px * scale, centerY - py * scale, scale));
   };
 
+/////////////SELECCIONAR JUGADOR EN EL MAPA//////////
+
+
+const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+useEffect(() => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
+
+  const handleClick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left - offset.x - legendPadding) / scale;
+    const my = (e.clientY - rect.top - offset.y - legendPadding) / scale;
+
+    // Buscar jugador en esa celda
+    const player = players.find(p => {
+      const px = p.x_coord * cellSize;
+      const py = p.y_coord * cellSize;
+      return (
+        mx >= px && mx < px + cellSize &&
+        my >= py && my < py + cellSize
+      );
+    });
+
+    setSelectedPlayer(player || null);
+  };
+
+  canvas.addEventListener('click', handleClick);
+  return () => canvas.removeEventListener('click', handleClick);
+}, [players, offset, scale, cellSize, legendPadding]);
+
+
+///_---------------------------------///////////
+
   return (
     <div className="w-full h-[80vh] relative flex justify-center items-center">
       <canvas
         ref={canvasRef}
         className="border border-gray-500 rounded-lg bg-black w-full h-full"
       />
+      {selectedPlayer && (
+  <div className="absolute bg-gray-900 text-white p-2 rounded shadow-lg">
+    <p><strong>Usuario:</strong> {selectedPlayer.username || selectedPlayer.id}</p>
+    <p><strong>Facción:</strong> {selectedPlayer.faction_name || 'N/A'}</p>
+    <p><strong>Recursos:</strong> 
+      {selectedPlayer.resources && (
+        <>
+          M:{selectedPlayer.resources.wood || 0}, 
+          P:{selectedPlayer.resources.stone || 0}, 
+          C:{selectedPlayer.resources.food || 0}
+        </>
+      )}
+    </p>
+    <p><strong>Población:</strong> {selectedPlayer.current_population}/{selectedPlayer.max_population}</p>
+  </div>
+)}
       <button
         onClick={centerOnPlayer}
         className="absolute top-2 right-2 px-3 py-1 bg-blue-600 text-white rounded shadow"
