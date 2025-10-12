@@ -218,9 +218,9 @@ useEffect(() => {
     <p><strong>Recursos:</strong> 
       
         <>
-          M:{selectedPlayer.wood || 0}, 
-          P:{selectedPlayer.stone || 0}, 
-          C:{selectedPlayer.food || 0}
+          <div> Madera:{selectedPlayer.wood || 0}</div>
+          <div> Piedra:{selectedPlayer.stone || 0}</div>
+          <div> Comida:{selectedPlayer.food || 0}</div>
         </>
       
     </p>
