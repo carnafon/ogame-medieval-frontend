@@ -395,6 +395,7 @@ function App() {
             <main className="grid grid-cols-1 lg:grid-cols-2 gap-8"> 
                 {/* Panel de Edificios Construidos */} 
                 <Card title="Edificios Actuales" icon={Home}> 
+                    console.log(buildings);
                     {buildings.length === 0 ? ( 
                         <p className="text-gray-400">Aún no tienes edificios. ¡Construye uno!</p> 
                     ) : ( 
