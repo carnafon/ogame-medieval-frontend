@@ -375,7 +375,7 @@ function App() {
             
             <div className="mb-8 pt-4"> 
                 {/* Display de Recursos y Población */} 
-                {entity && (
+                {entity && population && (
                 <section className="flex flex-wrap justify-center gap-4"> 
                     <ResourceDisplay icon={Axe} value={entity.resources.wood} label="Madera" color="text-amber-500" /> 
                     <ResourceDisplay icon={Mountain} value={entity.resources.stone} label="Piedra" color="text-gray-400" /> 
