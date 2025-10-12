@@ -216,13 +216,13 @@ useEffect(() => {
     <p><strong>Usuario:</strong> {selectedPlayer.name || selectedPlayer.id}</p>
     <p><strong>Facción:</strong> {selectedPlayer.faction_name || 'N/A'}</p>
     <p><strong>Recursos:</strong> 
-      {selectedPlayer.resources && (
+      
         <>
           M:{selectedPlayer.wood || 0}, 
           P:{selectedPlayer.stone || 0}, 
           C:{selectedPlayer.food || 0}
         </>
-      )}
+      
     </p>
     <p><strong>Población:</strong> {selectedPlayer.current_population}/{selectedPlayer.max_population}</p>
   </div>
