@@ -213,7 +213,7 @@ function App() {
             const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password,faction})
+                body: JSON.stringify({ username, password,factionId:faction }) // Envío de factionId
             });
 
             const data = await response.json();
