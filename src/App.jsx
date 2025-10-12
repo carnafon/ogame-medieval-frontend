@@ -56,7 +56,7 @@ function App() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [user, setUser] = useState(null); 
-    const [entity, setEntity] = useState(null); 
+    const [entity, setEntity] = useState({ resources: { wood: 0, stone: 0, food: 0 } });
     const [buildings, setBuildings] = useState([]); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
     
@@ -376,7 +376,6 @@ function App() {
             <div className="mb-8 pt-4"> 
                 {/* Display de Recursos y Población */} 
                 <section className="flex flex-wrap justify-center gap-4"> 
-                    console.log('RECURSOS:', entity.resources);
                     <ResourceDisplay icon={Axe} value={entity.resources.wood} label="Madera" color="text-amber-500" /> 
                     <ResourceDisplay icon={Mountain} value={entity.resources.stone} label="Piedra" color="text-gray-400" /> 
                     <ResourceDisplay icon={Soup} value={entity.resources.food} label="Comida" color="text-green-500" /> 
