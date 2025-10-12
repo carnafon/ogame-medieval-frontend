@@ -105,7 +105,14 @@ function App() {
             
             // Actualiza estados con los datos del usuario
             setUser(data.user);
-            setEntity(data.entity);
+            setEntity({
+                 id: userData.id,
+                 faction_id: userData.faction_id,
+                 faction_name: userData.faction_name,
+                  x_coord: userData.x_coord,
+                  y_coord: userData.y_coord,
+                 resources: userData.resources || {},
+                });
             setBuildings(data.buildings || []); 
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
             displayMessage(data.message || 'Datos cargados correctamente.', 'success');
@@ -369,9 +376,9 @@ function App() {
             <div className="mb-8 pt-4"> 
                 {/* Display de Recursos y Población */} 
                 <section className="flex flex-wrap justify-center gap-4"> 
-                    <ResourceDisplay icon={Axe} value={user.wood} label="Madera" color="text-amber-500" /> 
-                    <ResourceDisplay icon={Mountain} value={user.stone} label="Piedra" color="text-gray-400" /> 
-                    <ResourceDisplay icon={Soup} value={user.food} label="Comida" color="text-green-500" /> 
+                    <ResourceDisplay icon={Axe} value={entity.resources.wood} label="Madera" color="text-amber-500" /> 
+                    <ResourceDisplay icon={Mountain} value={entity.resources.stone} label="Piedra" color="text-gray-400" /> 
+                    <ResourceDisplay icon={Soup} value={entity.resources.food} label="Comida" color="text-green-500" /> 
                     <ResourceDisplay  
                         icon={Users}  
                         value={`${population.current_population}/${population.max_population}`}  
