@@ -12,8 +12,8 @@ export default function MapCanvas({
   const [scale, setScale] = useState(1);
 
   const mapPixelSize = gridSize * cellSize;
+  const legendPadding = 20; // espacio para las coordenadas
 
-  // 🔹 Mantener offset dentro de los límites del mapa
   const clampOffset = useCallback(
     (x, y, newScale = scale) => {
       const maxOffsetX = dimensions.width - mapPixelSize * newScale;
@@ -26,7 +26,6 @@ export default function MapCanvas({
     [scale, dimensions, mapPixelSize]
   );
 
-  // 🔹 Ajustar canvas al tamaño del contenedor
   useEffect(() => {
     const resize = () => {
       if (canvasRef.current) {
@@ -41,7 +40,6 @@ export default function MapCanvas({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // 🔹 Dibujar el mapa y jugadores
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -51,8 +49,40 @@ export default function MapCanvas({
     canvas.height = dimensions.height;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // ▪ Dibujar leyendas Y (izquierda)
     ctx.save();
-    ctx.translate(offset.x, offset.y);
+    ctx.font = `${12 / scale}px sans-serif`;
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+
+    for (let y = 0; y < gridSize; y++) {
+      const py = offset.y + y * cellSize * scale + (cellSize * scale) / 2;
+      if (py >= legendPadding && py <= dimensions.height) {
+        ctx.fillText(y, legendPadding - 5, py);
+      }
+    }
+    ctx.restore();
+
+    // ▪ Dibujar leyendas X (arriba)
+    ctx.save();
+    ctx.font = `${12 / scale}px sans-serif`;
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+
+    for (let x = 0; x < gridSize; x++) {
+      const px = offset.x + x * cellSize * scale + (cellSize * scale) / 2;
+      if (px >= legendPadding && px <= dimensions.width) {
+        ctx.fillText(x, px, legendPadding - 5);
+      }
+    }
+    ctx.restore();
+
+    // ▪ Transformación para el mapa
+    ctx.save();
+    ctx.translate(offset.x + legendPadding, offset.y + legendPadding);
     ctx.scale(scale, scale);
 
     // Dibujar cuadrícula
@@ -90,7 +120,7 @@ export default function MapCanvas({
     ctx.restore();
   }, [players, activeId, offset, scale, gridSize, cellSize, dimensions]);
 
-  // 🔹 Panning y Zoom
+  // ▪ Panning y Zoom
   useEffect(() => {
     const canvas = canvasRef.current;
     let isDragging = false;
@@ -113,7 +143,7 @@ export default function MapCanvas({
       e.preventDefault();
       const zoom = e.deltaY < 0 ? 1.1 : 0.9;
       setScale((prev) => {
-        const newScale = Math.min(3, Math.max(1, prev * zoom)); // 🔒 nunca menor a 1
+        const newScale = Math.min(3, Math.max(1, prev * zoom));
         return newScale;
       });
     };
@@ -131,17 +161,14 @@ export default function MapCanvas({
     };
   }, [clampOffset]);
 
-  // 🔹 Centrar mapa en jugador activo
   const centerOnPlayer = () => {
     const player = players.find((p) => p.id === activeId);
     if (!player) return;
     const px = player.x_coord * cellSize + cellSize / 2;
     const py = player.y_coord * cellSize + cellSize / 2;
-    const centerX = dimensions.width / 2;
-    const centerY = dimensions.height / 2;
-    setOffset(
-      clampOffset(centerX - px * scale, centerY - py * scale, scale)
-    );
+    const centerX = dimensions.width / 2 - legendPadding;
+    const centerY = dimensions.height / 2 - legendPadding;
+    setOffset(clampOffset(centerX - px * scale, centerY - py * scale, scale));
   };
 
   return (
