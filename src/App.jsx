@@ -12,7 +12,7 @@ const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 // Intervalo de tiempo para la generación de recursos (en milisegundos)
 // 10000 ms = 10 segundos
 const GENERATION_INTERVAL_MS = 10000; 
-const MAP_SIZE = 100; // Tamaño del mapa 100x100
+const MAP_SIZE = 1000; // Tamaño del mapa 100x100
 
 
 // Definiciones de Facciones (NUEVO)
