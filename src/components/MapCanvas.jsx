@@ -213,14 +213,14 @@ useEffect(() => {
       />
       {selectedPlayer && (
   <div className="absolute bg-gray-900 text-white p-2 rounded shadow-lg">
-    <p><strong>Usuario:</strong> {selectedPlayer.username || selectedPlayer.id}</p>
+    <p><strong>Usuario:</strong> {selectedPlayer.name || selectedPlayer.id}</p>
     <p><strong>Facción:</strong> {selectedPlayer.faction_name || 'N/A'}</p>
     <p><strong>Recursos:</strong> 
       {selectedPlayer.resources && (
         <>
-          M:{selectedPlayer.resources.wood || 0}, 
-          P:{selectedPlayer.resources.stone || 0}, 
-          C:{selectedPlayer.resources.food || 0}
+          M:{selectedPlayer.wood || 0}, 
+          P:{selectedPlayer.stone || 0}, 
+          C:{selectedPlayer.food || 0}
         </>
       )}
     </p>
