@@ -276,7 +276,7 @@ function App() {
             const response = await fetch(`${API_BASE_URL}/build`, {
                 method: 'POST',
                 headers: getAuthHeaders(storedToken),
-                body: JSON.stringify({ buildingType })
+                body: JSON.stringify({ buildingType,entity})
             });
 
             if (!response.ok) {
