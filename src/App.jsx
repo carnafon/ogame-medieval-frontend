@@ -313,9 +313,9 @@ function App() {
     // Comprueba si el usuario tiene suficientes recursos
     const canBuild = (cost) => {
         if (!user) return false;
-        return entity.resources.wood >= cost.wood &&
-               entity.resources.stone >= cost.stone &&
-               entity.resources.food >= cost.food;
+        return entity?.resources?.wood >= cost.wood &&
+               entity?.resources?.stone >= cost.stone &&
+               entity?.resources?.food >= cost.food;
     };
 
 
@@ -378,9 +378,9 @@ function App() {
                 {/* Display de Recursos y Población */} 
                 {entity && population && (
                 <section className="flex flex-wrap justify-center gap-4"> 
-                    <ResourceDisplay icon={Axe} value={entity?.resources.wood} label="Madera" color="text-amber-500" /> 
-                    <ResourceDisplay icon={Mountain} value={entity?.resources.stone} label="Piedra" color="text-gray-400" /> 
-                    <ResourceDisplay icon={Soup} value={entity?.resources.food} label="Comida" color="text-green-500" /> 
+                    <ResourceDisplay icon={Axe} value={entity?.resources?.wood} label="Madera" color="text-amber-500" /> 
+                    <ResourceDisplay icon={Mountain} value={entity?.resources?.stone} label="Piedra" color="text-gray-400" /> 
+                    <ResourceDisplay icon={Soup} value={entity?.resources?.food} label="Comida" color="text-green-500" /> 
                     <ResourceDisplay  
                         icon={Users}  
                         value={`${population?.current_population}/${population?.max_population}`}  
