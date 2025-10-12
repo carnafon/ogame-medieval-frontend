@@ -424,7 +424,7 @@ function App() {
                         const currentBuilding  = buildings.find(b => b.type === type);
                         const currentLevel = currentBuilding ? currentBuilding?.level : 0;
                         const nextLevel = currentLevel + 1;
-                        const nextLevelCost=building?.nextLevelCost || details.cost;
+                        const nextLevelCost=buildings?.nextLevelCost || details.cost;
                         return ( 
                         <div key={type} className="border border-gray-700 bg-gray-700/50 rounded-xl p-4 shadow-lg"> 
                             <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {currentLevel})</h4> 
