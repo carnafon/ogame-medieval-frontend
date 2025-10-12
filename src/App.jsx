@@ -55,8 +55,8 @@ function App() {
     // Estado de la Aplicación
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    // 'user' almacena todos los recursos y datos del usuario (wood, stone, etc.)
     const [user, setUser] = useState(null); 
+    const [entity, setEntity] = useState(null); 
     const [buildings, setBuildings] = useState([]); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
     
@@ -70,7 +70,7 @@ function App() {
     // Estado de Navegación: 'home' o 'map'
     const [currentView, setCurrentView] = useState('home'); 
 
-    // --- Funciones de Utilidad ---
+    // --- Funciones de Utilidad ----------------------------------//
 
     const displayMessage = useCallback((text, type = 'info') => {
         setUIMessage({ text, type });
@@ -105,6 +105,7 @@ function App() {
             
             // Actualiza estados con los datos del usuario
             setUser(data.user);
+            setEntity(data.entity);
             setBuildings(data.buildings || []); 
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
             displayMessage(data.message || 'Datos cargados correctamente.', 'success');
@@ -113,6 +114,7 @@ function App() {
             console.error("Error al cargar datos:", error);
             localStorage.removeItem('authToken');
             setUser(null);
+            setEntity(null);
             displayMessage('Sesión expirada o inválida. Inicia sesión.', 'error');
             return false;
         } finally {
@@ -133,7 +135,7 @@ function App() {
         checkSessionAndLoad();
     }, [fetchUserData]); 
 
-    // --- LÓGICA DE GENERACIÓN DE RECURSOS (Game Loop) ---
+    // --- LÓGICA DE GENERACIÓN DE RECURSOS (Game Loop) ----------------
     
     // Función para generar recursos (usada por el intervalo) - ENVUELTA EN useCallback
     const generateResources = useCallback(async (token) => {
@@ -154,7 +156,7 @@ function App() {
             }
             
             const data = await response.json();
-            setUser(data.user);
+            setEntity(data.entity); 
             setPopulation(data.population);
             // displayMessage(data.message || 'Recursos actualizados.', 'success'); 
             return true;
@@ -164,6 +166,7 @@ function App() {
             if (error.message.includes('Token inválido')) {
                 localStorage.removeItem('authToken');
                 setUser(null);
+                setEntity(null);
                 displayMessage('Sesión expirada. Inicia sesión de nuevo.', 'error');
             } else {
                 console.error("Error al generar recursos:", error);
@@ -278,7 +281,7 @@ function App() {
             const data = await response.json();
             
             // Actualizar estados
-            setUser(data.user);
+            setEntity(data.entity);
             setBuildings(data.buildings); 
             setPopulation(data.population);
             displayMessage(data.message || 'Construcción finalizada.', 'success');
@@ -293,6 +296,7 @@ function App() {
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         setUser(null);
+        setEntity(null);
         setBuildings([]);
         setIsRegistering(false); 
         displayMessage('Has cerrado sesión.', 'info');
@@ -301,9 +305,9 @@ function App() {
     // Comprueba si el usuario tiene suficientes recursos
     const canBuild = (cost) => {
         if (!user) return false;
-        return user.wood >= cost.wood && 
-               user.stone >= cost.stone && 
-               user.food >= cost.food;
+        return entity.resources.wood >= cost.wood &&
+               entity.resources.stone >= cost.stone &&
+               entity.resources.food >= cost.food;
     };
 
 
