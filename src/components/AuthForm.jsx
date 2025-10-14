@@ -1,94 +1,81 @@
-import React from "react";
-import { FACTIONS } from "../constants/factions";
+import React, { useState } from "react";
+import { useFactions } from "../hooks/useFactions";
 
-export default function AuthForm({
-  username,
-  password,
-  faction,
-  isRegistering,
-  setUsername,
-  setPassword,
-  setFaction,
-  setIsRegistering,
-  handleAuth,
-  isLoading,
-}) {
-  const onSubmit = async (e) => {
+export default function AuthForm({ onSubmit, isRegistering }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [factionId, setFactionId] = useState("");
+  const { factions, loading } = useFactions();
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (typeof handleAuth !== "function") {
-      console.error("handleAuth no es una función");
+    // Validar que haya facción si es registro
+    if (isRegistering && !factionId) {
+      alert("Por favor, selecciona una facción.");
       return;
     }
 
-    await handleAuth(username, password, isRegistering, faction);
+    onSubmit(username, password, isRegistering, factionId);
   };
 
   return (
-    <div className="w-full max-w-md p-6 bg-gray-900 rounded-lg shadow-lg text-white">
-      <h2 className="text-2xl font-bold mb-4">
-        {isRegistering ? "Registro" : "Iniciar sesión"}
-      </h2>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Usuario</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="w-full p-2 rounded bg-gray-800 border border-gray-600"
-          />
-        </div>
+    <div className="flex justify-center items-center h-screen bg-gray-900">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm space-y-4"
+      >
+        <h2 className="text-2xl font-bold text-center text-white mb-4">
+          {isRegistering ? "Registro" : "Iniciar Sesión"}
+        </h2>
 
-        <div>
-          <label className="block mb-1">Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full p-2 rounded bg-gray-800 border border-gray-600"
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Usuario"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
+        />
+
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
+        />
 
         {isRegistering && (
           <div>
-            <label className="block mb-1">Facción</label>
-            <select
-              value={faction}
-              onChange={(e) => setFaction(e.target.value)}
-              required
-              className="w-full p-2 rounded bg-gray-800 border border-gray-600"
-            >
-              <option value="">Selecciona una facción</option>
-              {FACTIONS.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+            {loading ? (
+              <p className="text-gray-400 text-sm">Cargando facciones...</p>
+            ) : (
+              <select
+                value={factionId}
+                onChange={(e) => setFactionId(e.target.value)}
+                required
+                className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Selecciona una facción</option>
+                {factions.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )}
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
         >
-          {isLoading ? "Procesando..." : isRegistering ? "Registrarse" : "Entrar"}
+          {isRegistering ? "Registrarse" : "Entrar"}
         </button>
       </form>
-
-      <p className="mt-4 text-center text-gray-400">
-        {isRegistering ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
-        <button
-          className="text-blue-400 underline"
-          onClick={() => setIsRegistering(!isRegistering)}
-        >
-          {isRegistering ? "Iniciar sesión" : "Regístrate"}
-        </button>
-      </p>
     </div>
   );
 }
