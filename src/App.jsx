@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import AuthForm from './components/AuthForm';
 import HomeView from './components/HomeView';
 import MapPage from './components/MapPage';
