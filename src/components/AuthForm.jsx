@@ -6,7 +6,7 @@ export default function AuthForm({ onSubmit, isRegistering }) {
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
   const { factions, loading } = useFactions();
-
+ console.log('Facciones id:', factionId);
   const handleSubmit = (e) => {
     e.preventDefault();
 

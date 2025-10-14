@@ -10,7 +10,7 @@ export function useFactions() {
       try {
         const res = await fetch(`${API_BASE_URL}/factions`);
         const data = await res.json();
-         console.log('Facciones recibidas:', data);
+        
         setFactions(data);
       } catch (error) {
         console.error("Error cargando facciones:", error);
