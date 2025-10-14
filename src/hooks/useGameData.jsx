@@ -125,7 +125,7 @@ export const useGameData = () => {
     // --- MANEJADORES DE ACCIONES ---
 
     // Manejador de Login/Registro
-    const handleAuth = useCallback(async (username, password, isRegistering) => {
+    const handleAuth = useCallback(async (username, password, isRegistering,factionId) => {
         const endpoint = isRegistering ? 'register' : 'login';
         displayMessage('Conectando...', 'info');
         
@@ -133,7 +133,7 @@ export const useGameData = () => {
             const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password,factionId })
             });
 
             const data = await response.json();
