@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { useFactions } from "../hooks/useFactions";
 
-export default function AuthForm({ onSubmit, isRegistering }) {
+export default function AuthForm({ onSubmit }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+
   const { factions, loading } = useFactions();
- console.log("Facciones cargadas:", factions, "Loading:", loading);
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validar que haya facción si es registro
     if (isRegistering && !factionId) {
       alert("Por favor, selecciona una facción.");
       return;
@@ -29,24 +30,29 @@ export default function AuthForm({ onSubmit, isRegistering }) {
           {isRegistering ? "Registro" : "Iniciar Sesión"}
         </h2>
 
+        {/* Usuario */}
         <input
           type="text"
           placeholder="Usuario"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
+          autoComplete="username"
           className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
         />
 
+        {/* Contraseña */}
         <input
           type="password"
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete={isRegistering ? "new-password" : "current-password"}
           className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
         />
 
+        {/* Selector de facción (solo en registro) */}
         {isRegistering && (
           <div>
             {loading ? (
@@ -69,12 +75,40 @@ export default function AuthForm({ onSubmit, isRegistering }) {
           </div>
         )}
 
+        {/* Botón principal */}
         <button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
         >
           {isRegistering ? "Registrarse" : "Entrar"}
         </button>
+
+        {/* Toggle entre registro / login */}
+        <p className="text-sm text-gray-400 text-center mt-2">
+          {isRegistering ? (
+            <>
+              ¿Ya tienes cuenta?{" "}
+              <button
+                type="button"
+                className="text-blue-400 underline"
+                onClick={() => setIsRegistering(false)}
+              >
+                Entrar
+              </button>
+            </>
+          ) : (
+            <>
+              ¿No tienes cuenta?{" "}
+              <button
+                type="button"
+                className="text-blue-400 underline"
+                onClick={() => setIsRegistering(true)}
+              >
+                Registrarse
+              </button>
+            </>
+          )}
+        </p>
       </form>
     </div>
   );
