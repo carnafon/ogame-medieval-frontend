@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useFactions } from "../hooks/useFactions";
 
-export default function AuthForm({ onSubmit }) {
+export default function AuthForm({ handleAuth }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
@@ -17,7 +17,7 @@ export default function AuthForm({ onSubmit }) {
       return;
     }
 
-    onSubmit(username, password, isRegistering, factionId);
+    handleAuth(username, password, isRegistering, factionId);
   };
 
   return (
