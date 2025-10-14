@@ -8,7 +8,7 @@ export function useFactions() {
   useEffect(() => {
     async function fetchFactions() {
       try {
-        const res = await fetch(`${API_URL}/factions`);
+        const res = await fetch(`${API_BASE_URL}/factions`);
         const data = await res.json();
         setFactions(data);
       } catch (error) {
