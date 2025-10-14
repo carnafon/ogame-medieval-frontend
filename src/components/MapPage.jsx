@@ -1,68 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import MapCanvas from './MapCanvas';
-import { Loader, Map as MapIcon } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import MapCanvas from "./MapCanvas";
+import { ArrowLeft } from "lucide-react";
 
-export default function MapPage({ user, setUIMessage, API_BASE_URL, MAP_SIZE, onBack }) {
-  const [loading, setLoading] = useState(false);
-  const [mapData, setMapData] = useState({ players: [], mapSize: MAP_SIZE });
-  const userId = user?.id;
+export default function MapPage({ onBack, token }) {
+  const [entities, setEntities] = useState([]);
+  const [playerEntity, setPlayerEntity] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // 🛰️ Cargar datos del jugador y mapa
   useEffect(() => {
-    if (!user) return;
-    const token = localStorage.getItem('authToken');
-    if (!token) return;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-    setLoading(true);
-    fetch(`${API_BASE_URL}/map`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setMapData({
-          
-          players: data || [],
-          mapSize: data.mapSize || MAP_SIZE,
+        // 1️⃣ Obtener entidad del jugador
+        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setUIMessage && setUIMessage('Mapa cargado.', 'success');
-      
-      })
-      .catch((err) => {
-        console.error(err);
-        setMapData({
-          players: [{ id: userId, x: Math.floor(MAP_SIZE/2), y: Math.floor(MAP_SIZE/2) }],
-          mapSize: MAP_SIZE,
+        const meData = await meRes.json();
+        setPlayerEntity(meData.entity);
+
+        // 2️⃣ Obtener todas las entidades del mapa
+        const mapRes = await fetch(`${import.meta.env.VITE_API_URL}/map`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setUIMessage && setUIMessage('Error cargando mapa. Se muestran datos simulados.', 'warning');
-      })
-      .finally(() => setLoading(false));
-  }, [user, API_BASE_URL, MAP_SIZE, setUIMessage, userId]);
+        const mapData = await mapRes.json();
+
+        setEntities(mapData);
+      } catch (err) {
+        console.error("Error al cargar mapa:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // ⏱️ Opcional: refrescar el mapa cada 10 segundos
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-gray-300">
+        <p className="text-xl mb-4">Cargando mapa...</p>
+        <button
+          onClick={onBack}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full flex items-center transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" /> Volver
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 bg-gray-900 min-h-screen">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={onBack} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded">
-          <MapIcon size={20} /> Volver
-        </button>
-        <h1 className="text-2xl font-bold text-white">Mapa Interactivo</h1>
+    <div className="relative w-full h-screen bg-gray-950 text-white overflow-hidden flex flex-col items-center justify-center">
+      {/* 🔙 Botón volver */}
+      <button
+        onClick={onBack}
+        className="absolute top-5 left-5 z-50 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full flex items-center font-semibold shadow-lg shadow-purple-500/40 transition-all"
+      >
+        <ArrowLeft className="w-5 h-5 mr-2" /> Volver
+      </button>
+
+      {/* 🌍 Título */}
+      <div className="absolute top-5 right-5 z-50 bg-gray-800/80 text-white py-2 px-5 rounded-xl text-lg font-semibold shadow-lg border border-gray-700">
+        Mapa global
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader className="animate-spin text-cyan-400" size={40} />
-        </div>
-      ) : (
-        <div className="flex justify-center">
-          <MapCanvas
-            players={mapData.players || []}
-            activeId={userId}
-            gridSize={mapData.mapSize || MAP_SIZE}
-            cellSize={20}
-          />
-        </div>
-      )}
+      {/* 🗺️ Canvas del mapa */}
+      <div className="w-full h-full flex items-center justify-center">
+        <MapCanvas
+          players={entities}
+          activeId={playerEntity?.id}
+          gridSize={100}
+          cellSize={20}
+        />
+      </div>
     </div>
   );
 }

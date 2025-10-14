@@ -1,569 +1,63 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
+import AuthForm from './components/AuthForm';
+import HomeView from './components/HomeView';
 import MapPage from './components/MapPage';
-import { 
-    Home, Factory, Users, Soup, Mountain, Axe, Loader, LogIn, UserPlus, Map
-} from 'lucide-react';
+import useGameData from './hooks/useGameData';
 
-// --- CONFIGURACIÓN FRONTAL ---
+export default function App() {
+  const {
+    user,
+    buildings,
+    population,
+    isLoading,
+    uiMessage,
+    canBuild,
+    handleAuth,
+    handleBuild,
+    handleLogout,
+  } = useGameData();
 
-// URL base de tu backend desplegado en Render (Actualizada)
-const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
+  const [showMap, setShowMap] = React.useState(false);
+  const [isRegistering, setIsRegistering] = React.useState(false);
 
-// Intervalo de tiempo para la generación de recursos (en milisegundos)
-// 10000 ms = 10 segundos
-const GENERATION_INTERVAL_MS = 10000; 
-const MAP_SIZE = 100; // Tamaño del mapa 100x100
-
-
-// Definiciones de Facciones (NUEVO)
-const FACTIONS = [
-    { id: '1', name: 'Celtas', description: 'Adoremos al sol y las piedras.', color: 'text-yellow-400' },
-    { id: '2', name: 'Vascones', description: 'Gora Euskadi.', color: 'text-green-400' },
-    { id: '3', name: 'Andalusíes', description: 'Ala es grande.', color: 'text-gray-400' },
-    { id: '4', name: 'Fenicios', description: 'Comercio sin fin.', color: 'text-red-400' },
-];
-
-// Definiciones de Edificios (adaptadas del código que proporcionaste)
-const BUILDING_DEFINITIONS = {
-    'house': { 
-        name: 'Casa Simple', 
-        icon: Home,
-        cost: { wood: 20, stone: 10, food: 5 },
-        description: 'Aumenta el límite de población y la moral.' 
-    },
-    'sawmill': {
-        name: 'Aserradero',
-        icon: Factory,
-        cost: { wood: 50, stone: 30, food: 10 },
-        description: 'Produce Madera (+5) y consume Comida cada tick.'
-    },
-    'quarry': {
-        name: 'Cantera',
-        icon: Mountain,
-        cost: { wood: 40, stone: 80, food: 15 },
-        description: 'Produce Piedra (+8) y consume Comida cada tick.'
-    },
-    'farm': {
-        name: 'Granja',
-        icon: Soup,
-        cost: { wood: 40, stone: 10, food: 0 },
-        description: 'Produce Comida (+10) cada tick.'
-    },
-};
-
-function App() {
-    // Estado de la Aplicación
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [user, setUser] = useState(null); 
-    const [entity, setEntity] = useState({ resources: { wood: 0, stone: 0, food: 0 } });
-    const [buildings, setBuildings] = useState([]); 
-    const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
-    
-    // Estado de UI
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [uiMessage, setUIMessage] = useState({ text: 'Inicia sesión o regístrate.', type: 'info' });
-
-     const [faction, setFaction] = useState(FACTIONS[0].id); // Estado para la facción, inicia con la primera opción
-
-    // Estado de Navegación: 'home' o 'map'
-    const [currentView, setCurrentView] = useState('home'); 
-
-    // --- Funciones de Utilidad ----------------------------------//
-
-    const displayMessage = useCallback((text, type = 'info') => {
-        setUIMessage({ text, type });
-        // Opcional: limpiar el mensaje después de un tiempo
-        // setTimeout(() => setUIMessage({ text: '', type: 'info' }), 5000);
-    }, []);
-    
-    // Función para manejar las cabeceras de la API
-    const getAuthHeaders = useCallback((token) => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    }), []);
-
-    // --- LÓGICA DE SESIÓN (ESTABLE CON useCallback) ---
-
-    // 1. Cargar datos del usuario
-    const fetchUserData = useCallback(async (token) => {
-        setIsLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/me`, {
-                method: 'GET',
-                headers: getAuthHeaders(token)
-            });
-
-            if (!response.ok) {
-                // Si la respuesta no es OK (ej. 401), se lanza un error
-                const errData = await response.json();
-                throw new Error(errData.message || 'Fallo al cargar datos.');
-            }
-            
-            const data = await response.json();
-            console.log('Respuesta /me:', data);
-            
-            // Actualiza estados con los datos del usuario
-            setUser(data.user);
-            setEntity({
-                    id: data.entity.id,
-                    faction_id: data.entity.faction_id,
-                    faction_name: data.entity.faction_name,
-                    x_coord: data.entity.x_coord,
-                    y_coord: data.entity.y_coord,
-                    resources: data.entity.resources || { wood: 0, stone: 0, food: 0 },
-                    current_population: data.entity.current_population || 0,
-                    max_population: data.entity.max_population || 0,
-                });
-            setBuildings(data.buildings || []); 
-            setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
-            displayMessage(data.message || 'Datos cargados correctamente.', 'success');
-            return true;
-        } catch (error) {
-            console.error("Error al cargar datos:", error);
-            localStorage.removeItem('authToken');
-            setUser(null);
-            setEntity(null);
-            displayMessage('Sesión expirada o inválida. Inicia sesión.', 'error');
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [getAuthHeaders, displayMessage]);
-
-    // Efecto 1: Comprobación de sesión al inicio
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        const checkSessionAndLoad = async () => {
-            if (storedToken) {
-                await fetchUserData(storedToken);
-            } else {
-                setIsLoading(false);
-            }
-        };
-        checkSessionAndLoad();
-    }, [fetchUserData]); 
-
-    // --- LÓGICA DE GENERACIÓN DE RECURSOS (Game Loop) ----------------
-    
-    // Función para generar recursos (usada por el intervalo) - ENVUELTA EN useCallback
-    const generateResources = useCallback(async (token) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/generate-resources`, {
-                method: 'POST',
-                headers: getAuthHeaders(token)
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                // Si el backend devuelve un error (ej: falta de comida), mostrarlo, pero no desloguear
-                if (response.status !== 401) { 
-                    displayMessage(errData.message || 'Error en la producción.', 'warning');
-                    return false;
-                }
-                throw new Error(errData.message || 'Token inválido.');
-            }
-            
-            const data = await response.json();
-            setEntity(data.entity); 
-            setPopulation(data.population);
-            // displayMessage(data.message || 'Recursos actualizados.', 'success'); 
-            return true;
-
-        } catch (error) {
-            // Manejar error 401: Sesión expirada
-            if (error.message.includes('Token inválido')) {
-                localStorage.removeItem('authToken');
-                setUser(null);
-                setEntity(null);
-                displayMessage('Sesión expirada. Inicia sesión de nuevo.', 'error');
-            } else {
-                console.error("Error al generar recursos:", error);
-                displayMessage('Error en la conexión o generación de recursos.', 'error');
-            }
-            return false;
-        }
-    }, [getAuthHeaders, displayMessage]); // Dependencia de getAuthHeaders y displayMessage
-
-    
-    // Efecto 2: Generación periódica de recursos
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        
-        // Solo inicia el intervalo si hay un token
-        if (user && storedToken) {
-            let timer;
-            
-            const startInterval = () => {
-                timer = setInterval(async () => {
-                    const success = await generateResources(storedToken);
-                    if (!success) {
-                        // Si el error fue un 401, generateResources ya limpió el token. 
-                        // Detener el intervalo.
-                        clearInterval(timer); 
-                    }
-                }, GENERATION_INTERVAL_MS);
-            };
-
-            startInterval(); // Llama inmediatamente al inicio si estás logueado
-            
-            // Función de limpieza
-            return () => clearInterval(timer);
-        }
-    // El intervalo se reinicia si 'user' cambia o 'generateResources' cambia (aunque es estable por useCallback)
-    }, [user, generateResources]); 
-
-    // --- MANEJADORES DE ACCIONES ---
-
-    // Manejador de Login/Registro
-    const handleAuth = async (e) => {
-        e.preventDefault();
-        const endpoint = isRegistering ? 'register' : 'login';
-        displayMessage('Conectando...', 'info');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password,factionId:faction }) // Envío de factionId
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Error desconocido en la autenticación.');
-            }
-            
-            const token = data.token;
-            localStorage.setItem('authToken', token); 
-            
-            // Limpiar formulario
-            setUsername('');
-            setPassword('');
-            
-            // Tras el login/registro, cargamos los datos
-            await fetchUserData(token); 
-            displayMessage(data.message || 'Autenticación exitosa.', 'success');
-
-        } catch (error) {
-            const errorMessage = error.message.includes('failed to fetch') 
-                ? 'Error de conexión con el servidor.' 
-                : error.message;
-            displayMessage(`Error: ${errorMessage}`, 'error');
-        }
-    };
-
-    // Manejador para la construcción
-    const handleBuild = async (buildingType) => {
-        const storedToken = localStorage.getItem('authToken');
-        if (!storedToken) {
-            displayMessage('Debes iniciar sesión para construir.', 'error');
-            return;
-        }
-        // Antes de construir, solicitar generación de recursos para aplicar producción pasiva pendiente
-        try {
-            await generateResources(storedToken);
-        } catch (err) {
-            // Si falla la actualización de recursos, mostrar aviso pero continuar para que el backend valide de todas formas
-            console.warn('No se pudo refrescar recursos antes de construir:', err && err.message);
-        }
-
-        const currentBuilding = buildings.find(b => b.type === buildingType);
-        const nextLevel = (currentBuilding?.level || 0) + 1;
-
-        setIsLoading(true);
-        displayMessage('Construyendo...', 'info');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/build`, {
-                method: 'POST',
-                headers: getAuthHeaders(storedToken),
-                body: JSON.stringify({ buildingType,entity,targetLevel: nextLevel})
-            });
-
-            if (!response.ok) {
-                 const errData = await response.json().catch(() => ({}));
-                 // Mostrar en consola el cuerpo de error para depuración
-                 console.error('Build failed response', { status: response.status, body: errData, buildingType });
-                 const serverMessage = errData && errData.message ? errData.message : 'Fallo al construir.';
-                 displayMessage(`Error: ${serverMessage}`, 'error');
-                 throw new Error(serverMessage);
-            }
-            
-            const data = await response.json();
-            
-            // Actualizar estados
-            setEntity(data.entity);
-            setBuildings(data.buildings); 
-            setPopulation(data.population);
-            displayMessage(data.message || 'Construcción finalizada.', 'success');
-
-        } catch (error) {
-            displayMessage(`Error: ${error.message}`, 'error');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        setUser(null);
-        setEntity(null);
-        setBuildings([]);
-        setIsRegistering(false); 
-        displayMessage('Has cerrado sesión.', 'info');
-    };
-
-    // Comprueba si el usuario tiene suficientes recursos
-    const canBuild = (cost) => {
-        if (!user) return false;
-        return entity?.resources?.wood >= cost.wood &&
-               entity?.resources?.stone >= cost.stone &&
-               entity?.resources?.food >= cost.food;
-    };
-
-
-    if (isLoading && !user) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-                <Loader className="w-8 h-8 mr-2 animate-spin text-cyan-400" />
-                Cargando sesión...
-            </div>
-        );
-    }
-
-    // --- Componentes de UI ---
-
-    const ResourceDisplay = ({ icon: Icon, value, label, color }) => (
-        <div className="flex flex-col items-center p-3 bg-gray-700/50 rounded-lg shadow-inner w-full sm:w-1/4">
-            <Icon className={`w-6 h-6 ${color}`} />
-            <div className="text-xl font-bold mt-1 text-white">{value}</div>
-            <div className="text-xs text-gray-400">{label}</div>
-        </div>
+  // Mostrar loading o mensaje inicial mientras carga
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <p>Cargando datos del juego...</p>
+      </div>
     );
-    
-    const Card = ({ title, children, icon: Icon }) => (
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl transition-all duration-300 hover:shadow-cyan-500/30">
-            <h2 className="text-2xl font-extrabold text-cyan-400 mb-4 border-b border-gray-600 pb-2 flex items-center">
-                {Icon && <Icon className="w-6 h-6 mr-2" />}
-                {title}
-            </h2>
-            <div className="space-y-4">
-                {children}
-            </div>
-        </div>
+  }
+
+  // Si no hay usuario autenticado, mostrar formulario de login/registro
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
+        <AuthForm
+          isRegistering={isRegistering}
+          setIsRegistering={setIsRegistering}
+          handleAuth={handleAuth}
+        />
+      </div>
     );
+  }
 
-    // MapContent removed; use MapPage component instead
+  // Si estamos en la vista del mapa
+  if (showMap) {
+    return <MapPage token={localStorage.getItem('authToken')} onBack={() => setShowMap(false)} />;
+  }
 
-    // --- RENDERIZADO PRINCIPAL --- 
-    
-    // Contenido del Dashboard principal (Home View)
-    const HomeContent = () => (
-        <div className="max-w-6xl mx-auto"> 
-            <div className="flex justify-end mb-4">
-                <button  
-                    onClick={() => setCurrentView('map')}  
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center shadow-lg shadow-purple-500/50 mr-4" 
-                    disabled={isLoading} 
-                > 
-                    <Map className="w-5 h-5 mr-2" /> Ver Mapa Global 
-                </button> 
-                <button  
-                    onClick={handleLogout}  
-                    className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full transition-colors" 
-                    disabled={isLoading} 
-                > 
-                    Cerrar Sesión 
-                </button> 
-            </div>
-            
-            <div className="mb-8 pt-4"> 
-                {/* Display de Recursos y Población */} 
-                {entity && population && (
-                <section className="flex flex-wrap justify-center gap-4"> 
-                    <ResourceDisplay icon={Axe} value={entity?.resources?.wood} label="Madera" color="text-amber-500" /> 
-                    <ResourceDisplay icon={Mountain} value={entity?.resources?.stone} label="Piedra" color="text-gray-400" /> 
-                    <ResourceDisplay icon={Soup} value={entity?.resources?.food} label="Comida" color="text-green-500" /> 
-                    <ResourceDisplay  
-                        icon={Users}  
-                        value={`${population?.current_population}/${population?.max_population}`}  
-                        label="Población Usada/Max"  
-                        color="text-blue-400"  
-                    /> 
-                </section> )}
-            </div> 
-
-            <main className="grid grid-cols-1 lg:grid-cols-2 gap-8"> 
-                {/* Panel de Edificios Construidos */} 
-                <Card title="Edificios Actuales" icon={Home}> 
-                    {buildings.length === 0 ? ( 
-                        <p className="text-gray-400">Aún no tienes edificios. ¡Construye uno!</p> 
-                    ) : ( 
-                        <ul className="list-none space-y-2"> 
-                            {buildings.map((b) => { 
-                                const def = BUILDING_DEFINITIONS[b.type]; 
-                                return ( 
-                                    <li key={b.type} className="bg-gray-700 p-3 rounded-lg flex items-center justify-between shadow-md"> 
-                                        <div className="flex items-center space-x-3"> 
-                                            {def && <def.icon className="w-5 h-5 text-yellow-400" />} 
-                                            <span className="font-medium text-white">{def ? def.name : b.type}</span> 
-                                        </div> 
-                                        <span className="text-lg font-bold text-cyan-300">Nivel {b.level}</span> 
-                                    </li> 
-                                ); 
-                            })} 
-                        </ul> 
-                    )} 
-                </Card> 
-
-                {/* SECCIÓN DE CONSTRUCCIÓN */} 
-                <Card title="Opciones de Construcción" icon={Factory}> 
-                    {Object.entries(BUILDING_DEFINITIONS).map(([type, details]) => { 
-                        const currentBuilding  = buildings.find(b => b.type === type);
-                        const currentLevel = currentBuilding ? currentBuilding?.level : 0;
-                        const nextLevel = currentLevel + 1;
-                        const nextLevelCost=buildings?.nextLevelCost || details.cost;
-                        return ( 
-                        <div key={type} className="border border-gray-700 bg-gray-700/50 rounded-xl p-4 shadow-lg"> 
-                            <h4 className="text-xl font-bold text-yellow-300 mb-2">{details.name} (Nivel {currentLevel})</h4> 
-                            <p className="text-sm text-gray-400 mb-3">{details.description}</p> 
-                            
-                            <p className="font-semibold text-gray-300 text-sm">
-                         Coste para nivel {nextLevel}:
-                        {nextLevelCost.wood > 0 && ` | Madera: ${nextLevelCost.wood}`}
-                         {nextLevelCost.stone > 0 && ` | Piedra: ${nextLevelCost.stone}`}
-                   {    nextLevelCost.food > 0 && ` | Comida: ${nextLevelCost.food}`}
-                    </p>
-
-                            <button  
-                                onClick={() => handleBuild(type)}  
-                                disabled={!canBuild(nextLevelCost) || isLoading} 
-                                className={`mt-3 w-full py-2 font-bold rounded-lg transition-all ${ 
-                                    canBuild(nextLevelCost) && !isLoading  
-                                        ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-500/30 text-white'  
-                                        : 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                                }`} 
-                            > 
-                                {isLoading ? 'Cargando...' : `Construir 1 ${details.name}`} 
-                            </button> 
-                            {!canBuild(nextLevelCost) && <p className="text-xs text-center text-red-400 mt-2">Recursos insuficientes.</p>} 
-                        </div> 
-                        )})} 
-                </Card> 
-            </main> 
-        </div> 
-    );
-    
-    return ( 
-        <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8"> 
-            <style>{` 
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap'); 
-                body { font-family: 'Inter', sans-serif; } 
-            `}</style> 
-            
-            <header className="text-center mb-8"> 
-                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"> 
-                    Juego de Comercio Medieval 
-                </h1> 
-                {user && <p className="text-lg text-gray-400 mt-2">Bienvenido, **{user.username}**</p>} 
-                <div className="h-6"> 
-                    {uiMessage.text && ( 
-                        <div className={`mt-2 p-2 rounded-lg font-semibold inline-block ${ 
-                            uiMessage.type === 'error' ? 'bg-red-600' :  
-                            uiMessage.type === 'warning' ? 'bg-yellow-600' :  
-                            'bg-green-600' 
-                        }`}> 
-                            {uiMessage.text} 
-                        </div> 
-                    )} 
-                </div> 
-            </header> 
-
-            {user ? ( 
-                // Estado de USUARIO LOGUEADO - Renderizado condicional por vista
-                <>
-                    {currentView === 'home' && <HomeContent />}
-                    {currentView === 'map' && <MapPage user={user} setUIMessage={displayMessage} API_BASE_URL={API_BASE_URL} MAP_SIZE={MAP_SIZE} onBack={() => setCurrentView('home')} />}
-                </>
-            ) : ( 
-                // Estado de NO LOGUEADO: Formulario de Autenticación 
-                <div className="max-w-md mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl"> 
-                    <div className="flex justify-between mb-6"> 
-                        <button  
-                            onClick={() => setIsRegistering(false)}  
-                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${ 
-                                !isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400' 
-                            }`} 
-                        > 
-                            <LogIn className="w-5 h-5 inline mr-2" /> Iniciar Sesión 
-                        </button> 
-                        <button  
-                            onClick={() => setIsRegistering(true)}  
-                            className={`flex-1 py-3 font-bold rounded-t-lg transition-colors ${ 
-                                isRegistering ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-700 text-gray-400' 
-                            }`} 
-                        > 
-                            <UserPlus className="w-5 h-5 inline mr-2" /> Registrarse 
-                        </button> 
-                    </div> 
-                    
-                    <form onSubmit={handleAuth} className="space-y-4"> 
-                        <input 
-                            type="text" 
-                            placeholder="Usuario" 
-                            value={username} 
-                            onChange={(e) => setUsername(e.target.value)} 
-                            required 
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500" 
-                        /> 
-                        <input 
-                            type="password" 
-                            placeholder="Contraseña" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                            required 
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500" 
-                        /> 
-
-
-                            {/* NUEVO: Selector de Facciones (solo visible en Registro) */}
-                            {isRegistering && (
-                                <select
-                                    value={faction}
-                                    onChange={(e) => setFaction(e.target.value)}
-                                    required
-                                    className="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer"
-                                >
-                                    <option value="" disabled>-- Selecciona tu Faccion --</option>
-                                    {FACTIONS.map((f) => (
-                                        <option key={f.id} value={f.id}>
-                                            {f.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-
-
-                        <button  
-                            type="submit"  
-                            disabled={isLoading} 
-                            className={`w-full py-3 font-bold rounded-lg transition-all ${ 
-                                isLoading ? 'bg-gray-500' : 'bg-cyan-600 hover:bg-cyan-700 shadow-md shadow-cyan-500/30' 
-                            } text-white`} 
-                        > 
-                            {isLoading ? <Loader className="w-5 h-5 inline animate-spin" /> : (isRegistering ? 'Crear Cuenta' : 'Acceder')} 
-                        </button> 
-                    </form> 
-                </div> 
-            )} 
-
-            <footer className="text-center mt-12 text-gray-500 text-sm"> 
-                <p>Ogapatrihero.</p> 
-            </footer> 
-        </div> 
-    ); 
-} 
-
-export default App;
+  // Vista principal del juego (Home)
+  return (
+    <HomeView
+      userData={user}
+      buildings={buildings}
+      population={population}
+      canBuild={canBuild}
+      onBuild={handleBuild}
+      onShowMap={() => setShowMap(true)}
+      onLogout={handleLogout}
+      uiMessage={uiMessage}
+    />
+  );
+}

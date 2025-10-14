@@ -1,166 +1,55 @@
 import React, { useState } from 'react';
-import { User, Lock, Mail, LogIn, UserPlus } from 'lucide-react';
 
-// --- Reusable Card Component (Copied for self-contained file structure) ---
-/**
- * Card Component
- * A reusable container component with standard modern styling.
- */
-const Card = ({ children, className = '', fullWidth = false }) => {
-  const widthClass = fullWidth ? 'max-w-5xl w-full' : 'max-w-lg w-full';
-
-  return (
-    <div
-      className={`
-        ${widthClass} 
-        mx-auto p-6 bg-gray-800 rounded-xl shadow-2xl 
-        border border-gray-700 
-        transition-all duration-300 
-        ${className}
-      `}
-    >
-      {children}
-    </div>
-  );
-};
-// --- End Card Component ---
-
-
-/**
- * AuthForm Component
- * Handles user login and registration in a single, toggleable form.
- */
-const AuthForm = () => {
-  const [isRegister, setIsRegister] = useState(false);
+export default function AuthForm({ isRegistering, setIsRegistering, onAuth, isLoading }) {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const mode = isRegister ? 'Register' : 'Login';
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    // --- Simulated API Call ---
-    setTimeout(() => {
-      setLoading(false);
-      if (username === 'test' && password === 'password' && !isRegister) {
-        console.log('Login Successful!');
-        setError('Login successful! (Simulated)');
-      } else if (isRegister) {
-        console.log('Registration Successful!');
-        setError('Registration successful! (Simulated)');
-      } else {
-        setError('Invalid username or password.');
-      }
-    }, 1500);
+    if (!username || !password) return;
+    await onAuth(username, password, isRegistering);
   };
 
-  const InputField = ({ Icon, type, value, onChange, placeholder, required = true }) => (
-    <div className="relative">
-      <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        disabled={loading}
-        className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-      />
-    </div>
-  );
-
   return (
-    <Card className="p-8">
-      <h2 className="text-3xl font-bold text-white mb-6 text-center">
-        {mode}
+    <div className="w-full max-w-sm p-6 bg-gray-800 rounded-lg shadow-lg">
+      <h2 className="text-xl font-bold mb-4">
+        {isRegistering ? 'Registrarse' : 'Iniciar sesión'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Username Input (Used in both modes) */}
-        <InputField
-          Icon={User}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
           type="text"
+          placeholder="Usuario"
           value={username}
-          onChange={setUsername}
-          placeholder="Username"
+          onChange={(e) => setUsername(e.target.value)}
+          className="p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
 
-        {/* Email Input (Only for Register) */}
-        {isRegister && (
-          <InputField
-            Icon={Mail}
-            type="email"
-            value={email}
-            onChange={setEmail}
-            placeholder="Email Address"
-          />
-        )}
-
-        {/* Password Input (Used in both modes) */}
-        <InputField
-          Icon={Lock}
+        <input
           type="password"
+          placeholder="Contraseña"
           value={password}
-          onChange={setPassword}
-          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+          className="p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
 
-        {/* Error/Message Display */}
-        {error && (
-          <p className={`text-center font-medium ${error.includes('successful') ? 'text-green-400' : 'text-red-400'}`}>
-            {error}
-          </p>
-        )}
-
-        {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading}
-          className="w-full flex items-center justify-center space-x-2 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
+          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold disabled:opacity-50"
         >
-          {loading ? (
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : (
-            <>
-              {isRegister ? <UserPlus className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
-              <span>{mode}</span>
-            </>
-          )}
+          {isRegistering ? 'Registrarse' : 'Iniciar sesión'}
         </button>
       </form>
 
-      {/* Toggle Link */}
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => setIsRegister(!isRegister)}
-          className="text-sm text-indigo-400 hover:text-indigo-300 transition duration-150 focus:outline-none"
-        >
-          {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
-        </button>
-      </div>
-    </Card>
-  );
-};
-
-
-const App = () => {
-  return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 font-inter">
-      <h1 className="text-4xl font-extrabold text-white mb-10 text-center">
-        Authentication Example
-      </h1>
-      <AuthForm />
+      <button
+        onClick={() => setIsRegistering(!isRegistering)}
+        className="mt-4 text-sm text-gray-400 hover:text-gray-200 underline"
+      >
+        {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+      </button>
     </div>
   );
-};
-
-export default App;
+}
