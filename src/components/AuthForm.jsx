@@ -1,4 +1,5 @@
 import React from "react";
+import { FACTIONS } from "../constants/factions";
 
 export default function AuthForm({
   username,
@@ -61,9 +62,11 @@ export default function AuthForm({
               className="w-full p-2 rounded bg-gray-800 border border-gray-600"
             >
               <option value="">Selecciona una facción</option>
-              <option value="humans">Humanos</option>
-              <option value="elves">Elfos</option>
-              <option value="dwarves">Enanos</option>
+              {FACTIONS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
             </select>
           </div>
         )}
