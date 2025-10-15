@@ -28,7 +28,9 @@ export default function MapPage({ onBack, token }) {
 
         setEntities(mapData);
       } catch (err) {
-        console.error("Error al cargar mapa:", err);
+        // Error cargando mapa. Intencionalmente no se logea en consola en producción.
+        // Para depuración local descomenta la siguiente línea:
+        // console.error("Error al cargar mapa:", err);
       } finally {
         setLoading(false);
       }
