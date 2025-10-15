@@ -90,11 +90,17 @@ export default function HomeView({
           <p>No tienes edificios aún.</p>
         ) : (
           <ul className="space-y-1">
-            {buildings.map((b, idx) => (
-              <li key={idx} className="bg-gray-800 p-2 rounded">
-                {b.name || b.type}
-              </li>
-            ))}
+            {buildings.map((b, idx) => {
+                  const def = BUILDING_DEFINITIONS[b.type] || {};
+                  const displayName = def.name || b.name || b.type;
+                  const meta = b.level ? `Nivel ${b.level}` : (b.count ? `${b.count}` : null);
+                  return (
+                    <li key={idx} className="bg-gray-800 p-2 rounded flex justify-between items-center">
+                      <span>{displayName}</span>
+                      {meta && <span className="text-sm text-gray-400">{meta}</span>}
+                    </li>
+                  );
+                })}
           </ul>
         )}
       </section>
