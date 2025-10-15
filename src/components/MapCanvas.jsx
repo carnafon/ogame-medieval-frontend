@@ -213,18 +213,18 @@ useEffect(() => {
       />
       {selectedPlayer && (
   <div className="absolute bg-gray-900 text-white p-2 rounded shadow-lg">
-    <p><strong>Usuario:</strong> {selectedPlayer.name || selectedPlayer.id}</p>
+    <p><strong>Usuario:</strong> {selectedPlayer.username || selectedPlayer.name || selectedPlayer.id}</p>
     <p><strong>Facción:</strong> {selectedPlayer.faction_name || 'N/A'}</p>
     <p><strong>Recursos:</strong> 
       
         <>
-          <div> Madera:{selectedPlayer.wood || 0}</div>
-          <div> Piedra:{selectedPlayer.stone || 0}</div>
-          <div> Comida:{selectedPlayer.food || 0}</div>
+          <div> Madera: {selectedPlayer.wood ?? 0}</div>
+          <div> Piedra: {selectedPlayer.stone ?? 0}</div>
+          <div> Comida: {selectedPlayer.food ?? 0}</div>
         </>
       
     </p>
-    <p><strong>Población:</strong> {selectedPlayer.current_population}/{selectedPlayer.max_population}</p>
+    <p><strong>Población:</strong> {selectedPlayer.current_population ?? 0}/{selectedPlayer.max_population ?? 0}</p>
   </div>
 )}
       <button
