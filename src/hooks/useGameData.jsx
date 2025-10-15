@@ -163,7 +163,7 @@ export const useGameData = () => {
             }
             return false;
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
 
     // --- MANEJADORES DE ACCIONES ---
 
@@ -276,7 +276,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user]);
 
 
     const handleLogout = useCallback(() => {
