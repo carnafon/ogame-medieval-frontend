@@ -57,6 +57,7 @@ export const useGameData = () => {
     // 1. Cargar datos del usuario
     const fetchUserData = useCallback(async (token) => {
         setIsLoading(true);
+        console.log('[useGameData] fetchUserData start, token=', token);
         try {
             const response = await fetch(`${API_BASE_URL}/me`, {
                 method: 'GET',
@@ -65,10 +66,12 @@ export const useGameData = () => {
 
             if (!response.ok) {
                 const errData = await response.json();
+                console.log('[useGameData] fetchUserData response not ok', response.status, errData);
                 throw new Error(errData.message || 'Fallo al cargar datos.');
             }
             
             const data = await response.json();
+            console.log('[useGameData] fetchUserData success', data);
             
             setUser(data.user);
             setBuildings(data.buildings || []); 
@@ -88,6 +91,7 @@ export const useGameData = () => {
 
     // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
+        console.log('[useGameData] generateResources start, token=', token);
         try {
             const response = await fetch(`${API_BASE_URL}/generate-resources`, {
                 method: 'POST',
@@ -96,6 +100,7 @@ export const useGameData = () => {
 
             if (!response.ok) {
                 const errData = await response.json();
+                console.log('[useGameData] generateResources response not ok', response.status, errData);
                 // Si el error es 401 (no autorizado), forzamos la sesión a expirar.
                 if (response.status !== 401) { 
                     displayMessage(errData.message || 'Error en la producción.', 'warning');
@@ -105,6 +110,7 @@ export const useGameData = () => {
             }
             
             const data = await response.json();
+            console.log('[useGameData] generateResources success', data);
             setUser(data.user);
             setPopulation(data.population);
             return true;
@@ -137,6 +143,7 @@ export const useGameData = () => {
             });
 
             const data = await response.json();
+            console.log('[useGameData] handleAuth response', data);
 
             if (!response.ok) {
                 throw new Error(data.message || 'Error desconocido en la autenticación.');
@@ -144,6 +151,7 @@ export const useGameData = () => {
             
             const token = data.token;
             localStorage.setItem('authToken', token); 
+            console.log('[useGameData] handleAuth saved token');
             // Si la respuesta ya incluye datos del usuario, actualizamos el estado inmediatamente
             if (data.user) {
                 setUser(data.user);
@@ -155,6 +163,7 @@ export const useGameData = () => {
 
             // Si la respuesta solo incluyó el token, intentamos cargar los datos mediante /me
             const loaded = await fetchUserData(token);
+            console.log('[useGameData] handleAuth fetchUserData loaded=', loaded);
             if (loaded) {
                 displayMessage(data.message || 'Autenticación exitosa.', 'success');
                 return true;

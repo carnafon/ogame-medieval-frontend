@@ -5,6 +5,8 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const { factions, loading } = useFactions();
 
@@ -16,7 +18,15 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
       return;
     }
 
-    handleAuth(username, password, isRegistering, factionId);
+    (async () => {
+      setSubmitting(true);
+      setError("");
+      const success = await handleAuth(username, password, isRegistering, factionId);
+      if (!success) {
+        setError('No se pudo iniciar sesión. Revisa tus credenciales o la conexión.');
+      }
+      setSubmitting(false);
+    })();
   };
 
   return (
@@ -77,10 +87,13 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
         {/* Botón principal */}
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
+          disabled={submitting}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-60"
         >
           {isRegistering ? "Registrarse" : "Entrar"}
         </button>
+
+        {error && <p className="text-sm text-red-400 text-center mt-2">{error}</p>}
 
         {/* Toggle entre registro / login */}
         <p className="text-sm text-gray-400 text-center mt-2">
