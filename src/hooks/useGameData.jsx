@@ -113,7 +113,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user?.entity_id]);
 
     // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
