@@ -130,7 +130,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, saveBuildings]);
 
     // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
@@ -233,7 +233,7 @@ export const useGameData = () => {
             displayMessage(`Error: ${errorMessage}`, 'error');
             return false;
         }
-    }, [fetchUserData, displayMessage, normalizeUserFromResponse]);
+    }, [fetchUserData, displayMessage, normalizeUserFromResponse, saveBuildings]);
 
     // Manejador para la construcción
     const handleBuild = useCallback(async (buildingType) => {
@@ -293,7 +293,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user, saveBuildings]);
 
 
     const handleLogout = useCallback(() => {
@@ -301,7 +301,7 @@ export const useGameData = () => {
         setUser(null);
         saveBuildings([]);
         displayMessage('Has cerrado sesión.', 'info');
-    }, [displayMessage]);
+    }, [displayMessage, saveBuildings]);
 
 
     // --- EFECTOS (Game Loop y Carga Inicial) ---
