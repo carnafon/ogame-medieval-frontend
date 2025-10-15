@@ -113,7 +113,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user?.entity_id]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
 
     // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
@@ -163,7 +163,7 @@ export const useGameData = () => {
             }
             return false;
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user]);
 
     // --- MANEJADORES DE ACCIONES ---
 
