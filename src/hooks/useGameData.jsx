@@ -230,23 +230,44 @@ export const useGameData = () => {
         displayMessage('Construyendo...', 'info');
 
         try {
+            // Necesitamos enviar la entidad (id) asociada al usuario para que el backend sepa
+            // sobre cuál asentamiento construir. Si no está disponible, mostramos un error local.
+            const entityId = user?.entity_id;
+            if (!entityId) {
+                displayMessage('No se encontró la entidad del usuario. Recarga y vuelve a intentarlo.', 'error');
+                setIsLoading(false);
+                return;
+            }
+
+            console.log('[useGameData] handleBuild: sending build request', { buildingType, entityId });
+
             const response = await fetch(`${API_BASE_URL}/build`, {
                 method: 'POST',
                 headers: getAuthHeaders(storedToken),
-                body: JSON.stringify({ buildingType })
+                body: JSON.stringify({ buildingType, entity: { id: entityId } })
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.message || 'Fallo al construir.');
+                let errText = `Status ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    errText = errData.message || JSON.stringify(errData);
+                    console.error('[useGameData] handleBuild backend error body', errData);
+                } catch (e) {
+                    console.error('[useGameData] handleBuild: failed to parse error body', e);
+                }
+                displayMessage(`Error al construir: ${errText}`, 'error');
+                setIsLoading(false);
+                return;
             }
-            
+
             const data = await response.json();
+            console.log('[useGameData] handleBuild success', data);
             // Normalizar respuesta de build: suele venir con entity/resources
             if (data.user || data.entity || data.resources) {
                 setUser(prev => normalizeUserFromResponse(data, prev || {}));
             }
-            setBuildings(data.buildings || []); 
+            setBuildings(data.buildings || []);
             setPopulation(data.population || data.entity?.population || {});
             displayMessage(data.message || 'Construcción finalizada.', 'success');
 
