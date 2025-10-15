@@ -144,15 +144,31 @@ export const useGameData = () => {
             
             const token = data.token;
             localStorage.setItem('authToken', token); 
-            
-            await fetchUserData(token); 
-            displayMessage(data.message || 'Autenticación exitosa.', 'success');
+            // Si la respuesta ya incluye datos del usuario, actualizamos el estado inmediatamente
+            if (data.user) {
+                setUser(data.user);
+                setBuildings(data.buildings || []);
+                setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
+                displayMessage(data.message || 'Autenticación exitosa.', 'success');
+                return true;
+            }
+
+            // Si la respuesta solo incluyó el token, intentamos cargar los datos mediante /me
+            const loaded = await fetchUserData(token);
+            if (loaded) {
+                displayMessage(data.message || 'Autenticación exitosa.', 'success');
+                return true;
+            }
+            // Si no se pudieron cargar los datos, asegurar limpieza
+            localStorage.removeItem('authToken');
+            return false;
 
         } catch (error) {
             const errorMessage = error.message.includes('failed to fetch') 
                 ? 'Error de conexión con el servidor.' 
                 : error.message;
             displayMessage(`Error: ${errorMessage}`, 'error');
+            return false;
         }
     }, [fetchUserData, displayMessage]);
 

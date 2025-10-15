@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { useFactions } from "../hooks/useFactions";
 
-export default function AuthForm({ handleAuth }) {
+export default function AuthForm({ handleAuth, isRegistering = false, setIsRegistering = () => {} }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false);
 
   const { factions, loading } = useFactions();
 
