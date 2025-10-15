@@ -54,6 +54,32 @@ export const useGameData = () => {
 
     // --- LÓGICA CORE ---
 
+    // Helper: normalizar respuesta del backend en un objeto `user` usable por la UI
+    const normalizeUserFromResponse = useCallback((data, currentUser = {}) => {
+        // data puede venir como { user, entity, resources } o { user, resources, buildings }
+        const baseUser = data.user || currentUser || {};
+        const entity = data.entity || {};
+        const resources = data.resources || entity.resources || {};
+
+        return {
+            // id/username vienen normalmente en user
+            id: baseUser.id || baseUser.user_id || undefined,
+            username: baseUser.username || baseUser.name || currentUser.username || '',
+            // Recursos a nivel top
+            wood: resources.wood || baseUser.wood || 0,
+            stone: resources.stone || baseUser.stone || 0,
+            food: resources.food || baseUser.food || 0,
+            // Datos de entidad útiles
+            entity_id: entity.id || baseUser.entity_id || undefined,
+            x_coord: entity.x_coord || baseUser.x_coord || 0,
+            y_coord: entity.y_coord || baseUser.y_coord || 0,
+            faction_id: entity.faction_id || baseUser.faction_id || null,
+            faction_name: entity.faction_name || baseUser.faction_name || '',
+            // conservar otros campos originales
+            ...baseUser,
+        };
+    }, []);
+
     // 1. Cargar datos del usuario
     const fetchUserData = useCallback(async (token) => {
         setIsLoading(true);
@@ -72,8 +98,8 @@ export const useGameData = () => {
             
             const data = await response.json();
             console.log('[useGameData] fetchUserData success', data);
-            
-            setUser(data.user);
+            // Normalizamos user a partir de la respuesta (user + entity + resources)
+            setUser(normalizeUserFromResponse(data));
             setBuildings(data.buildings || []); 
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
             displayMessage(data.message || 'Datos cargados correctamente.', 'success');
@@ -114,10 +140,11 @@ export const useGameData = () => {
             console.log('[useGameData] generateResources: response data fields', Object.keys(data));
             // Algunas respuestas a /generate-resources pueden no incluir `user`.
             // No sobrescribimos `user` con `undefined` — solo actualizamos si viene en la respuesta.
-            if (data.user) {
-                setUser(data.user);
+            // Si la respuesta incluye datos de entidad o recursos, normalizamos y actualizamos `user`
+            if (data.user || data.entity || data.resources) {
+                setUser(prev => normalizeUserFromResponse(data, prev || {}));
             } else {
-                console.log('[useGameData] generateResources: no user in response, keeping current user');
+                console.log('[useGameData] generateResources: no user/entity/resources in response, keeping current user');
             }
 
             if (data.population) {
@@ -163,10 +190,10 @@ export const useGameData = () => {
             localStorage.setItem('authToken', token); 
             console.log('[useGameData] handleAuth saved token');
             // Si la respuesta ya incluye datos del usuario, actualizamos el estado inmediatamente
-            if (data.user) {
-                setUser(data.user);
+            if (data.user || data.entity || data.resources) {
+                setUser(normalizeUserFromResponse(data));
                 setBuildings(data.buildings || []);
-                setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
+                setPopulation(data.population || data.entity?.population || { current_population: 0, max_population: 0, available_population: 0 });
                 displayMessage(data.message || 'Autenticación exitosa.', 'success');
                 return true;
             }
@@ -215,10 +242,12 @@ export const useGameData = () => {
             }
             
             const data = await response.json();
-            
-            setUser(data.user);
-            setBuildings(data.buildings); 
-            setPopulation(data.population);
+            // Normalizar respuesta de build: suele venir con entity/resources
+            if (data.user || data.entity || data.resources) {
+                setUser(prev => normalizeUserFromResponse(data, prev || {}));
+            }
+            setBuildings(data.buildings || []); 
+            setPopulation(data.population || data.entity?.population || {});
             displayMessage(data.message || 'Construcción finalizada.', 'success');
 
         } catch (error) {

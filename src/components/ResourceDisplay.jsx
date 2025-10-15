@@ -1,6 +1,13 @@
 import React from 'react';
 
-export default function ResourceDisplay({ wood = 0, stone = 0, food = 0, population = {} }) {
+export default function ResourceDisplay(props) {
+  // Aceptar tanto { resources: { wood, stone, food } } como props individuales
+  const resources = props.resources || {};
+  const wood = typeof props.wood !== 'undefined' ? props.wood : (resources.wood || 0);
+  const stone = typeof props.stone !== 'undefined' ? props.stone : (resources.stone || 0);
+  const food = typeof props.food !== 'undefined' ? props.food : (resources.food || 0);
+  const population = props.population || {};
+
   return (
     <div className="flex flex-wrap gap-4 mb-4 text-white">
       <div className="bg-gray-800 p-3 rounded shadow flex flex-col items-center w-24">
