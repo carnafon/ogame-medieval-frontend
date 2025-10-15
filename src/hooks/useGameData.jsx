@@ -113,7 +113,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
 
     // 2. Generar recursos (Game Loop tick)
     const generateResources = useCallback(async (token) => {
@@ -163,7 +163,7 @@ export const useGameData = () => {
             }
             return false;
         }
-    }, [getAuthHeaders, displayMessage]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
 
     // --- MANEJADORES DE ACCIONES ---
 
@@ -216,7 +216,7 @@ export const useGameData = () => {
             displayMessage(`Error: ${errorMessage}`, 'error');
             return false;
         }
-    }, [fetchUserData, displayMessage]);
+    }, [fetchUserData, displayMessage, normalizeUserFromResponse]);
 
     // Manejador para la construcción
     const handleBuild = useCallback(async (buildingType) => {
@@ -255,7 +255,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
 
 
     const handleLogout = useCallback(() => {
