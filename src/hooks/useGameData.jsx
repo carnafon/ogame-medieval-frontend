@@ -111,8 +111,18 @@ export const useGameData = () => {
             
             const data = await response.json();
             console.log('[useGameData] generateResources success', data);
-            setUser(data.user);
-            setPopulation(data.population);
+            console.log('[useGameData] generateResources: response data fields', Object.keys(data));
+            // Algunas respuestas a /generate-resources pueden no incluir `user`.
+            // No sobrescribimos `user` con `undefined` — solo actualizamos si viene en la respuesta.
+            if (data.user) {
+                setUser(data.user);
+            } else {
+                console.log('[useGameData] generateResources: no user in response, keeping current user');
+            }
+
+            if (data.population) {
+                setPopulation(data.population);
+            }
             return true;
 
         } catch (error) {
