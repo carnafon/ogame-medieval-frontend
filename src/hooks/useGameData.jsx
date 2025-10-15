@@ -35,7 +35,14 @@ export const BUILDING_DEFINITIONS = {
 export const useGameData = () => {
     // --- ESTADO DE LA APLICACIÓN ---
     const [user, setUser] = useState(null); 
-    const [buildings, setBuildings] = useState([]); 
+    const [buildings, setBuildings] = useState(() => {
+        try {
+            const raw = localStorage.getItem('userBuildings');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
     
     // --- ESTADO DE UI / MENSAJES ---
@@ -80,6 +87,16 @@ export const useGameData = () => {
         };
     }, []);
 
+    // helper para persistir edificios en localStorage
+    const saveBuildings = useCallback((items) => {
+        setBuildings(items || []);
+        try {
+            localStorage.setItem('userBuildings', JSON.stringify(items || []));
+        } catch (e) {
+            // ignore storage errors
+        }
+    }, []);
+
     // 1. Cargar datos del usuario
     const fetchUserData = useCallback(async (token) => {
         setIsLoading(true);
@@ -100,7 +117,7 @@ export const useGameData = () => {
             // fetchUserData success
             // Normalizamos user a partir de la respuesta (user + entity + resources)
             setUser(normalizeUserFromResponse(data));
-            setBuildings(data.buildings || []); 
+            saveBuildings(data.buildings || []);
             setPopulation(data.population || { current_population: 0, max_population: 0, available_population: 0 });
             displayMessage(data.message || 'Datos cargados correctamente.', 'success');
             return true;
@@ -192,7 +209,7 @@ export const useGameData = () => {
             // Si la respuesta ya incluye datos del usuario, actualizamos el estado inmediatamente
             if (data.user || data.entity || data.resources) {
                 setUser(normalizeUserFromResponse(data));
-                setBuildings(data.buildings || []);
+                saveBuildings(data.buildings || []);
                 setPopulation(data.population || data.entity?.population || { current_population: 0, max_population: 0, available_population: 0 });
                 displayMessage(data.message || 'Autenticación exitosa.', 'success');
                 return true;
@@ -267,7 +284,7 @@ export const useGameData = () => {
             if (data.user || data.entity || data.resources) {
                 setUser(prev => normalizeUserFromResponse(data, prev || {}));
             }
-            setBuildings(data.buildings || []);
+            saveBuildings(data.buildings || []);
             setPopulation(data.population || data.entity?.population || {});
             displayMessage(data.message || 'Construcción finalizada.', 'success');
 
@@ -282,7 +299,7 @@ export const useGameData = () => {
     const handleLogout = useCallback(() => {
         localStorage.removeItem('authToken');
         setUser(null);
-        setBuildings([]);
+        saveBuildings([]);
         displayMessage('Has cerrado sesión.', 'info');
     }, [displayMessage]);
 
