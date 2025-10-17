@@ -6,9 +6,9 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
   const [password, setPassword] = useState("");
   const [factionId, setFactionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
-  const { factions, loading } = useFactions();
+  const { factions, loading, error, reload } = useFactions();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -20,10 +20,10 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
 
     (async () => {
       setSubmitting(true);
-      setError("");
+      setFormError("");
       const success = await handleAuth(username, password, isRegistering, factionId);
       if (!success) {
-        setError('No se pudo iniciar sesión. Revisa tus credenciales o la conexión.');
+        setFormError('No se pudo iniciar sesión. Revisa tus credenciales o la conexión.');
       }
       setSubmitting(false);
     })();
@@ -66,6 +66,17 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
           <div>
             {loading ? (
               <p className="text-gray-400 text-sm">Cargando facciones...</p>
+            ) : error ? (
+              <div className="space-y-2">
+                <p className="text-red-400 text-sm">No se pudieron cargar las facciones ({error}).</p>
+                <button
+                  type="button"
+                  onClick={() => reload()}
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg transition-colors"
+                >
+                  Reintentar
+                </button>
+              </div>
             ) : (
               <select
                 value={factionId}
@@ -93,7 +104,7 @@ export default function AuthForm({ handleAuth, isRegistering = false, setIsRegis
           {isRegistering ? "Registrarse" : "Entrar"}
         </button>
 
-        {error && <p className="text-sm text-red-400 text-center mt-2">{error}</p>}
+  {formError && <p className="text-sm text-red-400 text-center mt-2">{formError}</p>}
 
         {/* Toggle entre registro / login */}
         <p className="text-sm text-gray-400 text-center mt-2">
