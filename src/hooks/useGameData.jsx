@@ -133,56 +133,6 @@ export const useGameData = () => {
         }
     }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, saveBuildings]);
 
-    // 2. Generar recursos (Game Loop tick)
-    const generateResources = useCallback(async (token) => {
-    // debug: generateResources start
-        try {
-            const response = await fetch(`${API_BASE_URL}/generate-resources`, {
-                method: 'POST',
-                headers: getAuthHeaders(token)
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                // generateResources response not ok
-                // Si el error es 401 (no autorizado), forzamos la sesión a expirar.
-                if (response.status !== 401) { 
-                    displayMessage(errData.message || 'Error en la producción.', 'warning');
-                    return false;
-                }
-                throw new Error(errData.message || 'Token inválido.');
-            }
-            
-            const data = await response.json();
-            // generateResources success
-            // response data fields: (omitted in production)
-            // Algunas respuestas a /generate-resources pueden no incluir `user`.
-            // No sobrescribimos `user` con `undefined` — solo actualizamos si viene en la respuesta.
-            // Si la respuesta incluye datos de entidad o recursos, normalizamos y actualizamos `user`
-            if (data.user || data.entity || data.resources) {
-                setUser(prev => normalizeUserFromResponse(data, prev || {}));
-            } else {
-                // no user/entity/resources in generateResources response
-            }
-
-            if (data.population) {
-                setPopulation(data.population);
-            }
-            return true;
-
-        } catch (error) {
-            if (error.message.includes('Token inválido')) {
-                localStorage.removeItem('authToken');
-                setUser(null);
-                displayMessage('Sesión expirada. Inicia sesión de nuevo.', 'error');
-            } else {
-                // Error al generar recursos
-                displayMessage('Error en la conexión o generación de recursos.', 'error');
-            }
-            return false;
-        }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
-
     // Fetch server-calculated build cost for a building type and cache it
     const fetchBuildCost = useCallback(async (buildingType, entityId = null) => {
         const token = localStorage.getItem('authToken');
