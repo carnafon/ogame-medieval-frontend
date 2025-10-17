@@ -156,4 +156,47 @@ export const BUILDING_DEFINITIONS = {
     description: 'Produce Herramientas usando Cobre y Madera.',
     category: 'processed'
   }
+  ,
+  elixireria: {
+    name: 'Elixirería',
+    icon: Factory,
+    cost: { wood: 30, stone: 20, food: 10 },
+    description: 'Produce Elixir de Conservación consumiendo Miel y Especias.',
+    category: 'specialized'
+  },
+  tintoreria_real: {
+    name: 'Tintorería Real',
+    icon: Factory,
+    cost: { wood: 35, stone: 20, food: 10 },
+    description: 'Produce Tintura Real usando Cobre y Tintura Púrpura.',
+    category: 'specialized'
+  },
+  escriba: {
+    name: 'Escriba',
+    icon: Box,
+    cost: { wood: 20, stone: 10, food: 5 },
+    description: 'Produce Pergaminos Ilustrados usando Agua Dulce y Libros.',
+    category: 'specialized'
+  },
+  artificiero: {
+    name: 'Artificiero',
+    icon: Factory,
+    cost: { wood: 45, stone: 30, food: 15 },
+    description: 'Produce Compuesto Explosivo usando Carbón y Ladrillo Cocido.',
+    category: 'specialized'
+  },
+  herreria_real: {
+    name: 'Herrería Real',
+    icon: Factory,
+    cost: { wood: 60, stone: 50, food: 15 },
+    description: 'Produce Acero de Damasco usando Piedra y Lingotes de Hierro.',
+    category: 'specialized'
+  },
+  lineria: {
+    name: 'Linería',
+    icon: Factory,
+    cost: { wood: 30, stone: 20, food: 8 },
+    description: 'Produce Lino a partir de Cuero y Telas de Seda.',
+    category: 'specialized'
+  }
 };

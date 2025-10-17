@@ -25,4 +25,11 @@ export const PRODUCTION_RATES = {
   libreria: { books: 1 },
   cerveceria: { beer: 1 },
   forja: { tools: 1 }
+  ,
+  elixireria: { preservation_elixir: 1 },
+  tintoreria_real: { royal_dye: 1 },
+  escriba: { illustrated_parchment: 1 },
+  artificiero: { explosive_compound: 1 },
+  herreria_real: { damascus_steel: 1 },
+  lineria: { linen: 1 }
 };
