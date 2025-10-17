@@ -234,6 +234,18 @@ export const useGameData = () => {
             return false;
         }
     }, [fetchUserData, displayMessage, normalizeUserFromResponse, saveBuildings]);
+    // Comprueba si el usuario tiene suficientes recursos
+    const canBuild = useCallback((cost) => {
+        if (!user) return false;
+        // Asegura que los recursos existen y son suficientes
+        const wood = user.wood || 0;
+        const stone = user.stone || 0;
+        const food = user.food || 0;
+
+        return wood >= (cost.wood || 0) && 
+               stone >= (cost.stone || 0) && 
+               food >= (cost.food || 0);
+    }, [user]);
 
     // Manejador para la construcción
     const handleBuild = useCallback(async (buildingType) => {
@@ -351,18 +363,6 @@ export const useGameData = () => {
         }
     }, [user, generateResources]); 
 
-    // Comprueba si el usuario tiene suficientes recursos
-    const canBuild = useCallback((cost) => {
-        if (!user) return false;
-        // Asegura que los recursos existen y son suficientes
-        const wood = user.wood || 0;
-        const stone = user.stone || 0;
-        const food = user.food || 0;
-
-        return wood >= (cost.wood || 0) && 
-               stone >= (cost.stone || 0) && 
-               food >= (cost.food || 0);
-    }, [user]);
 
     // Exportar el estado y las funciones
     return {
