@@ -12,4 +12,6 @@ export const PRODUCTION_RATES = {
   copper_mine: { copper: 3 },
   sheepfold: { wool: 2, food: -1 },
   apiary: { honey: 1 }
+  ,
+  sastreria: { silk_cloth: 1 }
 };

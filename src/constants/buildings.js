@@ -67,4 +67,10 @@ export const BUILDING_DEFINITIONS = {
     cost: { wood: 15, stone: 5 },
     description: 'Produce Miel (+1) por tick.'
   },
+  sastreria: {
+    name: 'Sastrería',
+    icon: Factory,
+    cost: { wood: 60, stone: 20, food: 10 },
+    description: 'Produce tela de seda (silk_cloth) consumiendo lana, madera y tinte púrpura.'
+  }
 };
