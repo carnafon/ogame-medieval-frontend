@@ -23,7 +23,7 @@ export const BUILDING_DEFINITIONS = {
     },
     'farm': {
         name: 'Granja',
-        cost: { wood: 40, stone: 10, food: 0 },
+        cost: { wood: 40, stone: 10, food: 10 },
         description: 'Produce Comida (+10) cada tick.'
     },
 };
