@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
+import useApi from '../hooks/useApi';
 
 export default function ResourceDisplay(props) {
   const resources = props.resources || {};
   const population = props.population || {};
+  const api = useApi();
+  const [resourceTypes, setResourceTypes] = useState([]); // array of {id,name}
 
-  // Build a grouped structure by category
+  useEffect(() => {
+    let mounted = true;
+    const fetchTypes = async () => {
+      try {
+        const res = await api.get('/api/resources/types');
+        if (!mounted) return;
+        if (res && res.resourceTypes) setResourceTypes(res.resourceTypes);
+      } catch (err) {
+        // ignore: if fetch fails, we'll fallback to showing available keys from props
+        console.warn('No se pudieron obtener tipos de recursos:', err.message || err);
+      }
+    };
+    fetchTypes();
+    return () => { mounted = false; };
+  }, [api]);
+
+  // Build a grouped structure by category using resourceTypes from backend
   const grouped = {
     common: {},
     processed: {},
@@ -13,8 +32,10 @@ export default function ResourceDisplay(props) {
     strategic: {}
   };
 
-  // Include known resources and any unknown as 'common'
-  Object.keys(resources).forEach(k => {
+  // If we have resource types from the server, iterate them; otherwise fallback to keys in resources
+  const keysToRender = resourceTypes.length > 0 ? resourceTypes.map(rt => rt.name.toLowerCase()) : Object.keys(resources);
+
+  keysToRender.forEach(k => {
     const cat = RESOURCE_CATEGORIES[k] || 'common';
     grouped[cat][k] = resources[k] || 0;
   });
@@ -49,4 +70,12 @@ export default function ResourceDisplay(props) {
       </div>
     </div>
   );
+}
+
+// fetch resource types on mount
+ResourceDisplay.defaultProps = {};
+
+export function ResourceDisplayLoader(props) {
+  // wrapper in case some pages don't use useApi; fetch happens in child via hook too
+  return <ResourceDisplay {...props} />;
 }
