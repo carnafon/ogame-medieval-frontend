@@ -113,14 +113,9 @@ export default function HomeView({
             const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
             return (
               <Card key={type} title={def.name} description={def.description} icon={def.icon}>
-                <div className="flex items-center mb-2">
-                  {def.icon && (
-                    <def.icon className="w-6 h-6 text-yellow-400 mr-3" />
-                  )}
-                  <div className="text-sm text-gray-300">
-                    <strong>Coste:</strong>
-                    <span className="ml-2">Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
-                  </div>
+                <div className="mb-2 text-sm text-gray-300">
+                  <strong>Coste:</strong>
+                  <span className="ml-2">Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
                 </div>
 
                 {/* Producción por tick si existe */}
