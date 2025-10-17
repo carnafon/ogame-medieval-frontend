@@ -1,5 +1,5 @@
 import React from 'react';
-import RESOURCE_CATEGORIES from '../constants/resourceCategories';
+import { RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
 
 export default function ResourceDisplay(props) {
   const resources = props.resources || {};
@@ -26,7 +26,7 @@ export default function ResourceDisplay(props) {
         {Object.keys(items).length === 0 ? <div className="text-sm text-gray-400">—</div> : null}
         {Object.entries(items).map(([k, v]) => (
           <div key={k} className="text-sm bg-gray-700 px-2 py-1 rounded">
-            <strong className="mr-2">{k}</strong>
+            <strong className="mr-2">{RESOURCE_LABELS[k] || k}</strong>
             <span>{v}</span>
           </div>
         ))}
