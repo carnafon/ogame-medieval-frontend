@@ -300,7 +300,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user, saveBuildings]);
+    }, [getAuthHeaders, displayMessage, normalizeUserFromResponse, user, saveBuildings, canBuild]);
 
 
     const handleLogout = useCallback(() => {
