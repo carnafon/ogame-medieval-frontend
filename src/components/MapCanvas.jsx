@@ -12,15 +12,22 @@ export default function MapCanvas({
   const [scale, setScale] = useState(1);
 
   const mapPixelSize = gridSize * cellSize;
-  const legendPadding = 20; // espacio para las coordenadas
+  const legendPadding = 28; // espacio para las coordenadas
+  const edgePadding = Math.ceil(cellSize * 0.5); // padding para que celdas en el borde no queden cortadas
 
   const clampOffset = useCallback(
     (x, y, newScale = scale) => {
-      const maxOffsetX = dimensions.width - mapPixelSize * newScale;
-      const maxOffsetY = dimensions.height - mapPixelSize * newScale;
+      // Considerar padding por leyenda y bordes para que la cuadrícula completa quede visible
+      const totalMapW = mapPixelSize * newScale + edgePadding * 2;
+      const totalMapH = mapPixelSize * newScale + edgePadding * 2;
+      const maxOffsetX = dimensions.width - legendPadding - totalMapW;
+      const maxOffsetY = dimensions.height - legendPadding - totalMapH;
+      const minX = legendPadding + edgePadding * -1; // allow a bit of negative offset to show prefix
+      const minY = legendPadding + edgePadding * -1;
+
       return {
-        x: Math.min(0, Math.max(maxOffsetX, x)),
-        y: Math.min(0, Math.max(maxOffsetY, y)),
+        x: Math.min(minX, Math.max(maxOffsetX, x)),
+        y: Math.min(minY, Math.max(maxOffsetY, y)),
       };
     },
     [scale, dimensions, mapPixelSize]
@@ -58,9 +65,9 @@ export default function MapCanvas({
     ctx.textBaseline = "middle";
 
     for (let y = 0; y < gridSize; y++) {
-      const py = offset.y + y * cellSize * scale + (cellSize * scale) / 2;
-      if (py >= legendPadding && py <= dimensions.height) {
-        ctx.fillText(y, legendPadding - 5, py);
+      const py = offset.y + legendPadding + edgePadding + y * cellSize * scale + (cellSize * scale) / 2;
+      if (py >= legendPadding && py <= dimensions.height - legendPadding) {
+        ctx.fillText(y, legendPadding - 8, py);
       }
     }
     ctx.restore();
@@ -73,16 +80,17 @@ export default function MapCanvas({
     ctx.textBaseline = "bottom";
 
     for (let x = 0; x < gridSize; x++) {
-      const px = offset.x + x * cellSize * scale + (cellSize * scale) / 2;
-      if (px >= legendPadding && px <= dimensions.width) {
-        ctx.fillText(x, px, legendPadding - 5);
+      const px = offset.x + legendPadding + edgePadding + x * cellSize * scale + (cellSize * scale) / 2;
+      if (px >= legendPadding && px <= dimensions.width - legendPadding) {
+        ctx.fillText(x, px, legendPadding - 8);
       }
     }
     ctx.restore();
 
     // ▪ Transformación para el mapa
     ctx.save();
-    ctx.translate(offset.x + legendPadding, offset.y + legendPadding);
+  // Translate including legend and edge padding so cell (0,0) is fully visible
+  ctx.translate(offset.x + legendPadding + edgePadding, offset.y + legendPadding + edgePadding);
     ctx.scale(scale, scale);
 
     // Dibujar cuadrícula
@@ -104,8 +112,8 @@ export default function MapCanvas({
     // Dibujar jugadores
     players.forEach((p) => {
       if (!p) return;
-      const px = p.x_coord * cellSize + cellSize / 2;
-      const py = p.y_coord * cellSize + cellSize / 2;
+  const px = p.x_coord * cellSize + cellSize / 2;
+  const py = p.y_coord * cellSize + cellSize / 2;
 
       ctx.beginPath();
       ctx.arc(px, py, cellSize / 3, 0, 2 * Math.PI);
@@ -166,9 +174,9 @@ export default function MapCanvas({
     if (!player) return;
     const px = player.x_coord * cellSize + cellSize / 2;
     const py = player.y_coord * cellSize + cellSize / 2;
-    const centerX = dimensions.width / 2 - legendPadding;
-    const centerY = dimensions.height / 2 - legendPadding;
-    setOffset(clampOffset(centerX - px * scale, centerY - py * scale, scale));
+     const centerX = dimensions.width / 2 - legendPadding - edgePadding;
+     const centerY = dimensions.height / 2 - legendPadding - edgePadding;
+     setOffset(clampOffset(centerX - px * scale, centerY - py * scale, scale));
   };
 
 /////////////SELECCIONAR JUGADOR EN EL MAPA//////////
