@@ -29,5 +29,26 @@ export const useApi = (displayMessage) => {
     return res.json();
   }, [getAuthHeaders]);
 
-  return { fetchUserData, generateResources, build };
+  // Generic helpers
+  const get = useCallback(async (path, token) => {
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const res = await fetch(url, { headers: getAuthHeaders(token) });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`GET ${path} failed: ${res.status} ${text}`);
+    }
+    return res.json();
+  }, [getAuthHeaders]);
+
+  const post = useCallback(async (path, body, token) => {
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    const res = await fetch(url, { method: 'POST', headers: getAuthHeaders(token), body: JSON.stringify(body) });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`POST ${path} failed: ${res.status} ${text}`);
+    }
+    return res.json();
+  }, [getAuthHeaders]);
+
+  return { fetchUserData, generateResources, build, get, post };
 };
