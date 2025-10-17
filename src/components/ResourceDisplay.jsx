@@ -12,7 +12,8 @@ export default function ResourceDisplay(props) {
     let mounted = true;
     const fetchTypes = async () => {
       try {
-        const res = await api.get('/api/resources/types');
+        // API_BASE_URL already includes /api, so request the resource path relative to that
+        const res = await api.get('/resources/types');
         if (!mounted) return;
         if (res && res.resourceTypes) setResourceTypes(res.resourceTypes);
       } catch (err) {
