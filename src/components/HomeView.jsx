@@ -103,73 +103,93 @@ export default function HomeView({
         </div>
       </section>
 
-      {/* --- Construcción de edificios --- */}
+      {/* --- Construcción de edificios por secciones --- */}
       <section className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Construir Edificios</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(BUILDING_DEFINITIONS).map(([type, def]) => {
-            const server = buildCosts[type];
-            const cost = server?.cost || def.cost;
-            const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
-            return (
-              <Card key={type} title={def.name} description={def.description} icon={def.icon}>
-                <div className="mb-2 text-sm text-gray-300">
-                  <strong>Coste:</strong>
-                  <span className="ml-2">
-                    {cost.wood > 0 && `Madera: ${cost.wood} `}
-                    {cost.stone > 0 && `Piedra: ${cost.stone} `}
-                    {cost.food > 0 && `Comida: ${cost.food}`}
-                  </span>
-                </div>
+        {['common', 'processed', 'specialized'].map(cat => {
+          const items = Object.entries(BUILDING_DEFINITIONS).filter(([,d]) => (d.category || 'common') === cat);
+          if (items.length === 0) return null;
+          const title = cat === 'common' ? 'Comunes' : (cat === 'processed' ? 'Procesados' : 'Especializados');
+          return (
+            <div key={cat} className="mb-6">
+              <h3 className="text-lg font-medium mb-2">{title}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {items.map(([type, def]) => {
+                  const server = buildCosts[type];
+                  const cost = server?.cost || def.cost;
+                  const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
+                  return (
+                    <Card key={type} title={def.name} description={def.description} icon={def.icon}>
+                      <div className="mb-2 text-sm text-gray-300">
+                        <strong>Coste:</strong>
+                        <span className="ml-2">
+                          {cost.wood > 0 && `Madera: ${cost.wood} `}
+                          {cost.stone > 0 && `Piedra: ${cost.stone} `}
+                          {cost.food > 0 && `Comida: ${cost.food}`}
+                        </span>
+                      </div>
 
-                {/* Producción por tick si existe */}
-                {PRODUCTION_RATES[type] && Object.keys(PRODUCTION_RATES[type]).length > 0 && (
-                  <div className="mb-2 text-sm text-gray-400">
-                    <div><strong>Producción/tick:</strong> <span className="ml-2">{Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${val > 0 ? '+' : ''}${val} ${res}`).join(', ')}</span></div>
-                    <div className="text-xs text-gray-500 mt-1">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerMinute(val)} ${res}/min`).join(', ')})</div>
-                    <div className="text-xs text-gray-500">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerHour(val)} ${res}/hr`).join(', ')})</div>
-                  </div>
-                )}
+                      {/* Producción por tick si existe */}
+                      {PRODUCTION_RATES[type] && Object.keys(PRODUCTION_RATES[type]).length > 0 && (
+                        <div className="mb-2 text-sm text-gray-400">
+                          <div><strong>Producción/tick:</strong> <span className="ml-2">{Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${val > 0 ? '+' : ''}${val} ${res}`).join(', ')}</span></div>
+                          <div className="text-xs text-gray-500 mt-1">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerMinute(val)} ${res}/min`).join(', ')})</div>
+                          <div className="text-xs text-gray-500">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerHour(val)} ${res}/hr`).join(', ')})</div>
+                        </div>
+                      )}
 
-                <button
-                  onClick={() => onBuild(type)}
-                  disabled={!enough}
-                  className={`px-3 py-1 rounded ${
-                    enough
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-gray-600 cursor-not-allowed'
-                  }`}
-                >
-                  Construir
-                </button>
-              </Card>
-            );
-          })}
-        </div>
+                      <button
+                        onClick={() => onBuild(type)}
+                        disabled={!enough}
+                        className={`px-3 py-1 rounded ${
+                          enough
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-gray-600 cursor-not-allowed'
+                        }`}
+                      >
+                        Construir
+                      </button>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       {/* --- Lista de edificios existentes --- */}
       <section className="mt-6">
         <h2 className="text-xl font-semibold mb-2">Edificios Actuales</h2>
-        {buildings.length === 0 ? (
+        {(!Array.isArray(buildings) || buildings.length === 0) ? (
           <p>No tienes edificios aún.</p>
         ) : (
-          <ul className="space-y-1">
-            {buildings.map((b, idx) => {
-                  const def = BUILDING_DEFINITIONS[b.type] || {};
-                  const displayName = def.name || b.name || b.type;
-                  const meta = b.level ? `Nivel ${b.level}` : (b.count ? `${b.count}` : null);
-                  return (
-                    <li key={idx} className="bg-gray-800 p-2 rounded flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        {def.icon && <def.icon className="w-5 h-5 text-yellow-400" />}
-                        <span>{displayName}</span>
-                      </div>
-                      {meta && <span className="text-sm text-gray-400">{meta}</span>}
-                    </li>
-                  );
-                })}
-          </ul>
+          ['common','processed','specialized'].map(cat => {
+            const title = cat === 'common' ? 'Comunes' : (cat === 'processed' ? 'Procesados' : 'Especializados');
+            const items = buildings.filter(b => (BUILDING_DEFINITIONS[b.type]?.category || 'common') === cat);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat} className="mb-4">
+                <h3 className="text-lg font-medium mb-2">{title}</h3>
+                <ul className="space-y-1">
+                  {items.map((b, idx) => {
+                    const def = BUILDING_DEFINITIONS[b.type] || {};
+                    const displayName = def.name || b.name || b.type;
+                    const meta = b.level ? `Nivel ${b.level}` : (b.count ? `${b.count}` : null);
+                    return (
+                      <li key={idx} className="bg-gray-800 p-2 rounded flex justify-between items-center">
+                        <div className="flex items-center space-x-3">
+                          {def.icon && <def.icon className="w-5 h-5 text-yellow-400" />}
+                          <span>{displayName}</span>
+                        </div>
+                        {meta && <span className="text-sm text-gray-400">{meta}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })
         )}
       </section>
     </div>
