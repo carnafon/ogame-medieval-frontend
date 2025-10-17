@@ -1,0 +1,218 @@
+[
+  {
+    "key": "wood",
+    "label": "Madera",
+    "matched": "000000\\1x1\\delapouite\\log.svg",
+    "score": 100
+  },
+  {
+    "key": "stone",
+    "label": "Piedra",
+    "matched": "000000\\1x1\\john-redman\\rock.svg",
+    "score": 100
+  },
+  {
+    "key": "food",
+    "label": "Grano",
+    "matched": "000000\\1x1\\delapouite\\bread.svg",
+    "score": 100
+  },
+  {
+    "key": "water",
+    "label": "Agua Dulce",
+    "matched": "000000\\1x1\\lorc\\drop.svg",
+    "score": 100
+  },
+  {
+    "key": "clay",
+    "label": "Arcilla",
+    "matched": "000000\\1x1\\delapouite\\clay-brick.svg",
+    "score": 20
+  },
+  {
+    "key": "leather",
+    "label": "Cuero",
+    "matched": "000000\\1x1\\delapouite\\leather-armor.svg",
+    "score": 20
+  },
+  {
+    "key": "coal",
+    "label": "Carbón",
+    "matched": "000000\\1x1\\delapouite\\coal-pile.svg",
+    "score": 20
+  },
+  {
+    "key": "copper",
+    "label": "Cobre",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "wool",
+    "label": "Lana",
+    "matched": "000000\\1x1\\delapouite\\wool.svg",
+    "score": 100
+  },
+  {
+    "key": "honey",
+    "label": "Miel",
+    "matched": "000000\\1x1\\delapouite\\honey-jar.svg",
+    "score": 20
+  },
+  {
+    "key": "lumber",
+    "label": "Madera Procesada",
+    "matched": "000000\\1x1\\delapouite\\slumbering-sanctuary.svg",
+    "score": 20
+  },
+  {
+    "key": "tools",
+    "label": "Herramientas",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "iron_ingot",
+    "label": "Lingote de Hierro",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "beer",
+    "label": "Cerveza",
+    "matched": "000000\\1x1\\delapouite\\beer-bottle.svg",
+    "score": 20
+  },
+  {
+    "key": "baked_brick",
+    "label": "Ladrillo Cocido",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "textile",
+    "label": "Textil",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "silk_cloth",
+    "label": "Telas de Seda",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "salted",
+    "label": "Salazonado",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "refined_clay",
+    "label": "Barro Refinado",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "books",
+    "label": "Libros",
+    "matched": "000000\\1x1\\delapouite\\bookshelf.svg",
+    "score": 20
+  },
+  {
+    "key": "purple_dye",
+    "label": "Tintura Púrpura",
+    "matched": "000000\\1x1\\caro-asercion\\sink.svg",
+    "score": 20
+  },
+  {
+    "key": "silk",
+    "label": "Seda",
+    "matched": "000000\\1x1\\caro-asercion\\clothesline.svg",
+    "score": 20
+  },
+  {
+    "key": "spice",
+    "label": "Especias",
+    "matched": "000000\\1x1\\lorc\\cool-spices.svg",
+    "score": 20
+  },
+  {
+    "key": "damascus_steel",
+    "label": "Acero de Damasco",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "preservation_elixir",
+    "label": "Elixir de Conservación",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "explosive_compound",
+    "label": "Compuesto Explosivo",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "royal_dye",
+    "label": "Tintura Real",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "illustrated_parchment",
+    "label": "Pergaminos Ilustrados",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "magic_catalyst",
+    "label": "Catalizador Mágico",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "gold",
+    "label": "Oro",
+    "matched": "000000\\1x1\\delapouite\\carnivorous-plant.svg",
+    "score": 20
+  },
+  {
+    "key": "rare_iron",
+    "label": "Hierro Raro",
+    "matched": "000000\\1x1\\faithtoken\\ore.svg",
+    "score": 100
+  },
+  {
+    "key": "sea_salt",
+    "label": "Sal Marina",
+    "matched": "000000\\1x1\\delapouite\\archive-research.svg",
+    "score": 20
+  },
+  {
+    "key": "linen",
+    "label": "Lino",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "gold_dye",
+    "label": "Tinte Dorado",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "sulfur",
+    "label": "Azufre",
+    "matched": null,
+    "score": 0
+  },
+  {
+    "key": "precious_gems",
+    "label": "Gemas Preciosas",
+    "matched": "000000\\1x1\\aussiesim\\card-10-diamonds.svg",
+    "score": 20
+  }
+]
