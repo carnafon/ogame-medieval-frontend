@@ -49,15 +49,24 @@ export const useGameData = () => {
         const baseUser = data.user || currentUser || {};
         const entity = data.entity || {};
         const resources = data.resources || entity.resources || {};
+        // normalize keys to lowercase and ensure numeric values
+        const normalizedResources = {};
+        Object.keys(resources || {}).forEach(k => {
+            const key = k.toLowerCase();
+            normalizedResources[key] = typeof resources[k] === 'number' ? resources[k] : Number(resources[k]) || 0;
+        });
 
         return {
             // id/username vienen normalmente en user
             id: baseUser.id || baseUser.user_id || undefined,
             username: baseUser.username || baseUser.name || currentUser.username || '',
             // Recursos a nivel top
-            wood: resources.wood || baseUser.wood || 0,
-            stone: resources.stone || baseUser.stone || 0,
-            food: resources.food || baseUser.food || 0,
+            // keep top-level shorthands for legacy UI
+            wood: normalizedResources.wood || baseUser.wood || 0,
+            stone: normalizedResources.stone || baseUser.stone || 0,
+            food: normalizedResources.food || baseUser.food || 0,
+            // full resources map
+            resources: normalizedResources,
             // Datos de entidad útiles
             entity_id: entity.id || baseUser.entity_id || undefined,
             x_coord: entity.x_coord || baseUser.x_coord || 0,
