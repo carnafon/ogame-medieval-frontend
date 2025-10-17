@@ -199,4 +199,48 @@ export const BUILDING_DEFINITIONS = {
     description: 'Produce Lino a partir de Cuero y Telas de Seda.',
     category: 'specialized'
   }
+  ,
+  // Strategic buildings
+  tintoreria_dorada: {
+    name: 'Tintorería Dorada',
+    icon: Feather,
+    cost: { wood: 60, stone: 40, food: 10 },
+    description: 'Consume Lana y telas para producir Tinte Dorado (golden_dye).',
+    category: 'strategic'
+  },
+  herreria_mitica: {
+    name: 'Herrería Mítica',
+    icon: Factory,
+    cost: { wood: 80, stone: 120, food: 20 },
+    description: 'Consume Piedra y Lingotes para producir Hierro Raro (rare_iron).',
+    category: 'strategic'
+  },
+  salinas: {
+    name: 'Salinas',
+    icon: Droplet,
+    cost: { wood: 30, stone: 20, food: 50 },
+    description: 'Consume Grano y cerveza para producir Sal Marina (sea_salt).',
+    category: 'strategic'
+  },
+  mina_azufre: {
+    name: 'Mina de Azufre',
+    icon: Zap,
+    cost: { wood: 50, stone: 70, food: 10 },
+    description: 'Consume Carbón y compuestos para crear Azufre (sulfur).',
+    category: 'strategic'
+  },
+  mina_gemas: {
+    name: 'Mina de Gemas',
+    icon: Grid,
+    cost: { wood: 90, stone: 150, food: 20 },
+    description: 'Consume Cobre y catalizadores para crear Gemas (gems).',
+    category: 'strategic'
+  },
+  telar_real: {
+    name: 'Telar Real',
+    icon: Box,
+    cost: { wood: 70, stone: 30, food: 15 },
+    description: 'Consume Miel, salazón y lino para producir Seda Real (royal_silk).',
+    category: 'strategic'
+  }
 };
