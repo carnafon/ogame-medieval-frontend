@@ -4,7 +4,7 @@ import { API_BASE_URL } from '../constants/config';
 export const useApi = (displayMessage) => {
   const getAuthHeaders = useCallback((token) => ({
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   }), []);
 
   const fetchUserData = useCallback(async (token) => {
