@@ -36,7 +36,24 @@ export default function MapPage({ onBack, token }) {
           setErrorMsg(errData?.message || 'No se pudo cargar los datos del jugador.');
         } else {
           const meData = await meRes.json();
-          setPlayerEntity(meData.entity || null);
+          // Si la entidad en /me no trae max_population, calcularlo desde buildings
+          const entity = meData.entity || null;
+          if (entity) {
+            const buildings = Array.isArray(entity.buildings) ? entity.buildings : [];
+            const BASE = 10;
+            const PER_HOUSE = 5;
+            let houses = 0;
+            buildings.forEach(b => {
+              if (!b) return;
+              if (b.type === 'house') {
+                const qty = typeof b.level === 'number' ? b.level : (typeof b.count === 'number' ? b.count : 0);
+                houses += qty;
+              }
+            });
+            const computedMax = BASE + houses * PER_HOUSE;
+            entity.max_population = (entity.max_population && entity.max_population > 0) ? entity.max_population : computedMax;
+          }
+          setPlayerEntity(entity);
         }
 
         // 2️⃣ Obtener todas las entidades del mapa
@@ -53,21 +70,42 @@ export default function MapPage({ onBack, token }) {
           const mapData = await mapRes.json();
           // Asegurarse de que mapData sea un array y normalizar los campos usados por MapCanvas
           const rows = Array.isArray(mapData) ? mapData : [];
-          const normalized = rows.map(r => ({
-            id: r.id,
-            username: r.username || r.name || r.user_name || (r.user_id ? String(r.user_id) : String(r.id)),
-            name: r.name || r.username || null,
-            x_coord: Number(r.x_coord) || 0,
-            y_coord: Number(r.y_coord) || 0,
-            faction_id: r.faction_id || null,
-            faction_name: r.faction_name || '',
-            current_population: Number(r.current_population) || 0,
-            max_population: Number(r.max_population) || 0,
-            wood: Number(r.wood) || 0,
-            stone: Number(r.stone) || 0,
-            food: Number(r.food) || 0,
-            buildings: Array.isArray(r.buildings) ? r.buildings : []
-          }));
+
+          const computeMaxFromBuildings = (buildings = []) => {
+            const BASE = 10;
+            const PER_HOUSE = 5;
+            let houses = 0;
+            if (!Array.isArray(buildings)) return BASE;
+            buildings.forEach(b => {
+              if (!b) return;
+              if (b.type === 'house') {
+                const qty = typeof b.level === 'number' ? b.level : (typeof b.count === 'number' ? b.count : 0);
+                houses += qty;
+              }
+            });
+            return BASE + houses * PER_HOUSE;
+          };
+
+          const normalized = rows.map(r => {
+            const buildings = Array.isArray(r.buildings) ? r.buildings : [];
+            const maxFromData = Number(r.max_population);
+            const computed = computeMaxFromBuildings(buildings);
+            return {
+              id: r.id,
+              username: r.username || r.name || r.user_name || (r.user_id ? String(r.user_id) : String(r.id)),
+              name: r.name || r.username || null,
+              x_coord: Number(r.x_coord) || 0,
+              y_coord: Number(r.y_coord) || 0,
+              faction_id: r.faction_id || null,
+              faction_name: r.faction_name || '',
+              current_population: Number(r.current_population) || 0,
+              max_population: (Number.isFinite(maxFromData) && maxFromData > 0) ? maxFromData : computed,
+              wood: Number(r.wood) || 0,
+              stone: Number(r.stone) || 0,
+              food: Number(r.food) || 0,
+              buildings: buildings
+            };
+          });
 
           setEntities(normalized);
         }
