@@ -243,6 +243,13 @@ export const useGameData = () => {
             return;
         }
         
+        // Pre-check local resources to avoid unnecessary requests that will 400
+        const costDef = BUILDING_DEFINITIONS[buildingType]?.cost;
+        if (costDef && !canBuild(costDef)) {
+            displayMessage('No tienes recursos suficientes para construir (comprobación local).', 'error');
+            return;
+        }
+
         setIsLoading(true);
         displayMessage('Construyendo...', 'info');
 
