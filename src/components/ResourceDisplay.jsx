@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
-import useApi from '../hooks/useApi';
+import { useApi } from '../hooks/useApi';
 
 export default function ResourceDisplay(props) {
   const resources = props.resources || {};
