@@ -30,7 +30,7 @@ export default function MapCanvas({
         y: Math.min(minY, Math.max(maxOffsetY, y)),
       };
     },
-    [scale, dimensions, mapPixelSize]
+    [scale, dimensions, mapPixelSize, edgePadding]
   );
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function MapCanvas({
     });
 
     ctx.restore();
-  }, [players, activeId, offset, scale, gridSize, cellSize, dimensions]);
+  }, [players, activeId, offset, scale, gridSize, cellSize, dimensions, edgePadding]);
 
   // ▪ Panning y Zoom
   useEffect(() => {

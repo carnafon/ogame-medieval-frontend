@@ -84,7 +84,7 @@ export default function MapPage({ onBack, token }) {
     fetchData();
 
     // ⏱️ Opcional: refrescar el mapa cada 10 segundos
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 1000000);
     return () => clearInterval(interval);
   }, [token]);
 
