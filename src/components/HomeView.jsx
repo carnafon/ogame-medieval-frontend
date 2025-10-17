@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ResourceDisplay from './ResourceDisplay';
 import Card from './Card';
 import { BUILDING_DEFINITIONS } from '../hooks/useGameData';
-
-import React, { useEffect } from 'react';
 
 export default function HomeView({
   userData,
