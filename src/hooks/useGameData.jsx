@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BUILDING_DEFINITIONS } from '../constants/buildings';
 
 // --- CONSTANTES Y DEFINICIONES ---
 // (Exportadas para que el componente GameUI pueda acceder a ellas para renderizar costos)
 export const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 export const GENERATION_INTERVAL_MS = 10000; // 10 segundos
-
-import { BUILDING_DEFINITIONS } from '../constants/buildings';
 
 // Re-export so other modules that import BUILDING_DEFINITIONS from this hook keep working
 export { BUILDING_DEFINITIONS };
