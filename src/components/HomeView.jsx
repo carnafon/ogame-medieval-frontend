@@ -86,7 +86,7 @@ export default function HomeView({
           stone: userData.stone || 0,
           food: userData.food || 0,
         }}
-        population={population}
+        population={mergedPopulation}
       />
 
       {/* --- Construcción de edificios --- */}
