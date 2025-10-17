@@ -51,8 +51,8 @@ export default function ResourceDisplay(props) {
         {Object.entries(items).map(([k, v]) => (
           <div key={k} className="text-sm bg-gray-700 px-2 py-1 rounded flex items-center gap-2">
             <ResourceIcon name={k} label={RESOURCE_LABELS[k] || k} />
-            <strong className="mr-2">{RESOURCE_LABELS[k] || k}</strong>
-            <span>{v}</span>
+            {/* hide textual label; show only icon (tooltip has the label) */}
+            <span className="ml-1 text-sm font-medium">{v}</span>
           </div>
         ))}
       </div>
