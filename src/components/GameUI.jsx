@@ -87,8 +87,8 @@ const ActionPanel = ({ handleBuild, disabled }) => {
                         <building.icon className="w-8 h-8 mb-1" />
                         <span className="font-semibold">{building.name}</span>
                         <div className="text-xs mt-1 text-gray-300 space-y-0.5">
-                            <p className="text-yellow-400">Wood: {building.cost.wood}</p>
-                            <p className="text-gray-400">Stone: {building.cost.stone}</p>
+                            {building.cost.wood > 0 && <p className="text-yellow-400">Wood: {building.cost.wood}</p>}
+                            {building.cost.stone > 0 && <p className="text-gray-400">Stone: {building.cost.stone}</p>}
                         </div>
                     </button>
                 ))}

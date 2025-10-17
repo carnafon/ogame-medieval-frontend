@@ -115,7 +115,11 @@ export default function HomeView({
               <Card key={type} title={def.name} description={def.description} icon={def.icon}>
                 <div className="mb-2 text-sm text-gray-300">
                   <strong>Coste:</strong>
-                  <span className="ml-2">Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
+                  <span className="ml-2">
+                    {cost.wood > 0 && `Madera: ${cost.wood} `}
+                    {cost.stone > 0 && `Piedra: ${cost.stone} `}
+                    {cost.food > 0 && `Comida: ${cost.food}`}
+                  </span>
                 </div>
 
                 {/* Producción por tick si existe */}
