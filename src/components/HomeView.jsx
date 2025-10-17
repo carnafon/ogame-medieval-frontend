@@ -87,14 +87,19 @@ export default function HomeView({
       )}
 
       {/* --- Recursos y población --- */}
-      <ResourceDisplay
-        resources={{
-          wood: userData.wood || 0,
-          stone: userData.stone || 0,
-          food: userData.food || 0,
-        }}
-        population={mergedPopulation}
-      />
+      <section className="mt-4">
+        <h2 className="text-xl font-semibold mb-3">Recursos</h2>
+        <div className="bg-gray-800 p-4 rounded">
+          <ResourceDisplay
+            resources={{
+              wood: userData.wood || 0,
+              stone: userData.stone || 0,
+              food: userData.food || 0,
+            }}
+            population={mergedPopulation}
+          />
+        </div>
+      </section>
 
       {/* --- Construcción de edificios --- */}
       <section className="mt-6">
