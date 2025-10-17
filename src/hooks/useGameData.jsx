@@ -287,7 +287,15 @@ export const useGameData = () => {
                 let errText = `Status ${response.status}`;
                 try {
                     const errData = await response.json();
-                    errText = errData.message || JSON.stringify(errData);
+                    // If backend provided structured insufficient-resource info, format it nicely
+                    if (errData && errData.code === 'INSUFFICIENT') {
+                        const r = errData.resource || 'recursos';
+                        const need = errData.need ?? '';
+                        const have = errData.have ?? '';
+                        errText = `${errData.message || 'Recursos insuficientes'} (${r} necesita ${need}, tienes ${have})`;
+                    } else {
+                        errText = errData.message || JSON.stringify(errData);
+                    }
                     // handleBuild backend error body (omitted)
                 } catch (e) {
                     // failed to parse error body
