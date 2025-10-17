@@ -209,7 +209,7 @@ useEffect(() => {
 
   canvas.addEventListener('click', handleClick);
   return () => canvas.removeEventListener('click', handleClick);
-}, [players, offset, scale, cellSize, legendPadding]);
+}, [players, offset, scale, cellSize, legendPadding, edgePadding]);
 
 
 ///_---------------------------------///////////
