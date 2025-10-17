@@ -15,6 +15,8 @@ export default function App() {
     handleAuth,
     handleBuild,
     handleLogout,
+    buildCosts,
+    fetchBuildCost,
   } = useGameData();
 
   const [showMap, setShowMap] = React.useState(false);
