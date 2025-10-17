@@ -85,4 +85,75 @@ export const BUILDING_DEFINITIONS = {
     description: 'Produce tela de seda (silk_cloth) consumiendo lana, madera y tinte púrpura.',
     category: 'processed'
   }
+  ,
+  carpinteria: {
+    name: 'Carpintería',
+    icon: Factory,
+    cost: { wood: 40, stone: 20, food: 5 },
+    description: 'Procesa Madera para obtener Madera Procesada.',
+    category: 'processed'
+  },
+  fabrica_ladrillos: {
+    name: 'Fábrica de Ladrillos',
+    icon: Box,
+    cost: { wood: 30, stone: 25, food: 5 },
+    description: 'Produce Ladrillo Cocido a partir de arcilla y carbón.',
+    category: 'processed'
+  },
+  bazar_especias: {
+    name: 'Bazar de Especias',
+    icon: Factory,
+    cost: { wood: 20, stone: 15, food: 10 },
+    description: 'Convierte Grano y Miel en Especias.',
+    category: 'processed'
+  },
+  alfareria: {
+    name: 'Alfarería',
+    icon: Box,
+    cost: { wood: 25, stone: 20, food: 5 },
+    description: 'Produce Arcilla Refinada usando agua dulce.',
+    category: 'processed'
+  },
+  tintoreria_morada: {
+    name: 'Tintorería Morada',
+    icon: Factory,
+    cost: { wood: 30, stone: 15, food: 5 },
+    description: 'Produce Tintura Púrpura a partir de Lana y Cobre.',
+    category: 'processed'
+  },
+  herreria: {
+    name: 'Herrería',
+    icon: Factory,
+    cost: { wood: 50, stone: 40, food: 10 },
+    description: 'Produce Lingote de Hierro usando Cobre y Carbón.',
+    category: 'processed'
+  },
+  salazoneria: {
+    name: 'Salazonería',
+    icon: Box,
+    cost: { wood: 25, stone: 20, food: 5 },
+    description: 'Produce productos salazonados usando cuero y piedra.',
+    category: 'processed'
+  },
+  libreria: {
+    name: 'Librería',
+    icon: Factory,
+    cost: { wood: 45, stone: 10, food: 5 },
+    description: 'Produce Libros usando Lana y Madera.',
+    category: 'processed'
+  },
+  cerveceria: {
+    name: 'Cervecería',
+    icon: Factory,
+    cost: { wood: 30, stone: 10, food: 10 },
+    description: 'Produce Cerveza a partir de Grano y Agua Dulce.',
+    category: 'processed'
+  },
+  forja: {
+    name: 'Forja',
+    icon: Factory,
+    cost: { wood: 40, stone: 30, food: 8 },
+    description: 'Produce Herramientas usando Cobre y Madera.',
+    category: 'processed'
+  }
 };

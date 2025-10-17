@@ -14,4 +14,15 @@ export const PRODUCTION_RATES = {
   apiary: { honey: 1 }
   ,
   sastreria: { silk_cloth: 1 }
+  ,
+  carpinteria: { lumber: 1 },
+  fabrica_ladrillos: { baked_brick: 1 },
+  bazar_especias: { spice: 1 },
+  alfareria: { refined_clay: 1 },
+  tintoreria_morada: { purple_dye: 1 },
+  herreria: { iron_ingot: 1 },
+  salazoneria: { salted: 1 },
+  libreria: { books: 1 },
+  cerveceria: { beer: 1 },
+  forja: { tools: 1 }
 };
