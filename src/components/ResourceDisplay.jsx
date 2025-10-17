@@ -12,8 +12,9 @@ export default function ResourceDisplay(props) {
     let mounted = true;
     const fetchTypes = async () => {
       try {
-        // API_BASE_URL already includes /api, so request the resource path relative to that
-        const res = await api.get('/resources/types');
+        // Use stored auth token if available so deployed APIs that require auth accept the request
+        const token = localStorage.getItem('authToken');
+        const res = await api.get('/resources/types', token);
         if (!mounted) return;
         if (res && res.resourceTypes) setResourceTypes(res.resourceTypes);
       } catch (err) {
