@@ -48,7 +48,7 @@ export const BUILDING_DEFINITIONS = {
     icon: Feather,
     cost: { wood: 25, stone: 15, food: 5 },
     description: 'Produce Cuero (+3) por tick.',
-    category: 'processed'
+    category: 'common'
   },
   coal_mine: {
     name: 'Mina de Carbón',
