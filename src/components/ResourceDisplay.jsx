@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
 import { useApi } from '../hooks/useApi';
+import ResourceIcon from './ResourceIcon';
 
 export default function ResourceDisplay(props) {
   const resources = props.resources || {};
@@ -48,7 +49,8 @@ export default function ResourceDisplay(props) {
       <div className="flex flex-wrap gap-3">
         {Object.keys(items).length === 0 ? <div className="text-sm text-gray-400">—</div> : null}
         {Object.entries(items).map(([k, v]) => (
-          <div key={k} className="text-sm bg-gray-700 px-2 py-1 rounded">
+          <div key={k} className="text-sm bg-gray-700 px-2 py-1 rounded flex items-center gap-2">
+            <ResourceIcon name={k} label={RESOURCE_LABELS[k] || k} />
             <strong className="mr-2">{RESOURCE_LABELS[k] || k}</strong>
             <span>{v}</span>
           </div>
