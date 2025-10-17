@@ -277,15 +277,14 @@ export const useGameData = () => {
                 return;
             }
 
-            const data = await response.json();
-            // handleBuild success
-            // Normalizar respuesta de build: suele venir con entity/resources
-            if (data.user || data.entity || data.resources) {
-                setUser(prev => normalizeUserFromResponse(data, prev || {}));
-            }
-            saveBuildings(data.buildings || []);
-            setPopulation(data.population || data.entity?.population || {});
-            displayMessage(data.message || 'Construcción finalizada.', 'success');
+                    const data = await response.json();
+                    // handleBuild success
+                    // En lugar de confiar en respuesta parcial, recargamos el estado completo del usuario
+                    // para replicar el comportamiento de F5 y mantener consistencia.
+                    await fetchUserData(storedToken);
+                    // Asegurar que buildings locales se sincronicen inmediatamente si vienen en la respuesta
+                    if (data.buildings) saveBuildings(data.buildings || []);
+                    displayMessage(data.message || 'Construcción finalizada.', 'success');
 
         } catch (error) {
             displayMessage(`Error: ${error.message}`, 'error');
