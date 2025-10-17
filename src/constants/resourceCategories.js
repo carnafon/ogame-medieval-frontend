@@ -28,7 +28,7 @@ const RESOURCE_CATEGORIES = {
   purple_dye: 'processed',
 
   // specialized (ejemplos)
-  linen: 'specialized',
+  
   spice: 'specialized',
   damascus_steel: 'specialized',
   preservation_elixir: 'specialized',
@@ -43,8 +43,8 @@ const RESOURCE_CATEGORIES = {
   // recursos estratégicos añadidos por el usuario
   rare_iron: 'strategic',
   sea_salt: 'strategic',
-  silk_cloth: 'strategic',
-  purple_dye: 'strategic',
+  linen: 'strategic',
+  gold_dye: 'strategic',
   sulfur: 'strategic',
   precious_gems: 'strategic'
 };
@@ -88,6 +88,7 @@ const RESOURCE_LABELS = {
   // etiquetas en español para recursos estratégicos añadidos
   rare_iron: 'Hierro Raro',
   sea_salt: 'Sal Marina',
+  linen: 'Lino',
   gold_dye: 'Tinte Dorado',
   sulfur: 'Azufre',
   precious_gems: 'Gemas Preciosas'
