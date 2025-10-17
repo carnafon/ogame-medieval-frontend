@@ -52,6 +52,13 @@ export default function HomeView({
         <h1 className="text-2xl font-bold">{userData.username || 'Jugador'}</h1>
         <div className="flex items-center space-x-4">
           <button
+            onClick={() => window.location.reload()}
+            className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-700"
+            title="Refrescar (F5)"
+          >
+            Refrescar
+          </button>
+          <button
             onClick={onShowMap}
             className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700"
           >
