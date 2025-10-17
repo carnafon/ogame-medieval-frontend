@@ -22,6 +22,29 @@ export default function HomeView({
     // fetch for all building types
     Object.keys(BUILDING_DEFINITIONS).forEach(type => fetchBuildCost(type, userData.entity_id));
   }, [userData, fetchBuildCost]);
+  // Si la población máxima no viene desde el backend, calcularla desde los edificios
+  const computeMaxFromBuildings = (buildings = []) => {
+    const BASE = 10;
+    const PER_HOUSE = 5;
+    let houses = 0;
+    if (!Array.isArray(buildings)) return BASE;
+    buildings.forEach(b => {
+      if (!b) return;
+      if (b.type === 'house') {
+        const qty = typeof b.level === 'number' ? b.level : (typeof b.count === 'number' ? b.count : 0);
+        houses += qty;
+      }
+    });
+    return BASE + houses * PER_HOUSE;
+  };
+
+  const pop = population || { current_population: 0, max_population: 0 };
+  const computedMax = computeMaxFromBuildings(buildings || []);
+  const mergedPopulation = {
+    current_population: pop.current_population || 0,
+    max_population: (pop.max_population && pop.max_population > 0) ? pop.max_population : computedMax
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
       {/* --- Header --- */}
