@@ -1,4 +1,4 @@
-import { Home, Factory, Mountain, Soup, Droplet, Box, Feather, Wind, Zap, Tool, Grid } from 'lucide-react';
+import { Home, Factory, Mountain, Soup, Droplet, Box, Feather, Wind, Zap, Grid } from 'lucide-react';
 
 export const BUILDING_DEFINITIONS = {
   house: { 
@@ -63,7 +63,7 @@ export const BUILDING_DEFINITIONS = {
   },
   apiary: {
     name: 'Colmenar',
-    icon: Tool,
+    icon: Box,
     cost: { wood: 15, stone: 5 },
     description: 'Produce Miel (+1) por tick.'
   },
