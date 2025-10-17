@@ -190,8 +190,9 @@ useEffect(() => {
 
   const handleClick = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left - offset.x - legendPadding) / scale;
-    const my = (e.clientY - rect.top - offset.y - legendPadding) / scale;
+    // Map mouse to map-local coordinates taking into account offset, legend and edge padding
+    const mx = (e.clientX - rect.left - offset.x - legendPadding - edgePadding) / scale;
+    const my = (e.clientY - rect.top - offset.y - legendPadding - edgePadding) / scale;
 
     // Buscar jugador en esa celda
     const player = players.find(p => {
