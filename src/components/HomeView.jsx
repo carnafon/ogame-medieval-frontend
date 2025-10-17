@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import ResourceDisplay from './ResourceDisplay';
 import Card from './Card';
 import { BUILDING_DEFINITIONS } from '../hooks/useGameData';
+import { PRODUCTION_RATES } from '../constants/productionRates';
+import { perTickToPerMinute, perTickToPerHour } from '../utils/productionUtils';
 
 export default function HomeView({
   userData,
@@ -110,11 +112,26 @@ export default function HomeView({
             const cost = server?.cost || def.cost;
             const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
             return (
-              <Card key={type} title={def.name} description={def.description}>
-                <div className="mb-2">
-                  <strong>Coste:</strong> 
-                  <span> Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
+              <Card key={type} title={def.name} description={def.description} icon={def.icon}>
+                <div className="flex items-center mb-2">
+                  {def.icon && (
+                    <def.icon className="w-6 h-6 text-yellow-400 mr-3" />
+                  )}
+                  <div className="text-sm text-gray-300">
+                    <strong>Coste:</strong>
+                    <span className="ml-2">Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
+                  </div>
                 </div>
+
+                {/* Producción por tick si existe */}
+                {PRODUCTION_RATES[type] && Object.keys(PRODUCTION_RATES[type]).length > 0 && (
+                  <div className="mb-2 text-sm text-gray-400">
+                    <div><strong>Producción/tick:</strong> <span className="ml-2">{Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${val > 0 ? '+' : ''}${val} ${res}`).join(', ')}</span></div>
+                    <div className="text-xs text-gray-500 mt-1">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerMinute(val)} ${res}/min`).join(', ')})</div>
+                    <div className="text-xs text-gray-500">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerHour(val)} ${res}/hr`).join(', ')})</div>
+                  </div>
+                )}
+
                 <button
                   onClick={() => onBuild(type)}
                   disabled={!enough}
@@ -145,7 +162,10 @@ export default function HomeView({
                   const meta = b.level ? `Nivel ${b.level}` : (b.count ? `${b.count}` : null);
                   return (
                     <li key={idx} className="bg-gray-800 p-2 rounded flex justify-between items-center">
-                      <span>{displayName}</span>
+                      <div className="flex items-center space-x-3">
+                        {def.icon && <def.icon className="w-5 h-5 text-yellow-400" />}
+                        <span>{displayName}</span>
+                      </div>
                       {meta && <span className="text-sm text-gray-400">{meta}</span>}
                     </li>
                   );

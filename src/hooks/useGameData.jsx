@@ -5,28 +5,10 @@ import { useState, useEffect, useCallback } from 'react';
 export const API_BASE_URL = 'https://ogame-medieval-api.onrender.com/api';
 export const GENERATION_INTERVAL_MS = 10000; // 10 segundos
 
-export const BUILDING_DEFINITIONS = {
-    'house': { 
-        name: 'Casa Simple', 
-        cost: { wood: 20, stone: 10, food: 5 },
-        description: 'Aumenta el límite de población y la moral.' 
-    },
-    'sawmill': {
-        name: 'Aserradero',
-        cost: { wood: 50, stone: 30, food: 10 },
-        description: 'Produce Madera (+5) y consume Comida cada tick.'
-    },
-    'quarry': {
-        name: 'Cantera',
-        cost: { wood: 40, stone: 80, food: 15 },
-        description: 'Produce Piedra (+8) y consume Comida cada tick.'
-    },
-    'farm': {
-        name: 'Granja',
-        cost: { wood: 40, stone: 10, food: 10 },
-        description: 'Produce Comida (+10) cada tick.'
-    },
-};
+import { BUILDING_DEFINITIONS } from '../constants/buildings';
+
+// Re-export so other modules that import BUILDING_DEFINITIONS from this hook keep working
+export { BUILDING_DEFINITIONS };
 
 // =========================================================================
 // CUSTOM HOOK: useGameData (Lógica de la Aplicación)
