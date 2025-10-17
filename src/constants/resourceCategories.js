@@ -17,14 +17,36 @@ const RESOURCE_CATEGORIES = {
   // processed (ejemplos)
   lumber: 'processed',
   tools: 'processed',
+  iron_ingot: 'processed',
+  beer: 'processed',
+  baked_brick: 'processed',
+  textile: 'processed',
+  silk_cloth: 'processed',
+  salted: 'processed',
+  refined_clay: 'processed',
+  books: 'processed',
+  purple_dye: 'processed',
 
   // specialized (ejemplos)
   silk: 'specialized',
   spice: 'specialized',
+  damascus_steel: 'specialized',
+  preservation_elixir: 'specialized',
+  explosive_compound: 'specialized',
+  royal_dye: 'specialized',
+  illustrated_parchment: 'specialized',
+  magic_catalyst: 'specialized',
 
   // strategic (ejemplos)
-  iron: 'strategic',
-  gold: 'strategic'
+
+  gold: 'strategic',
+  // recursos estratégicos añadidos por el usuario
+  rare_iron: 'strategic',
+  sea_salt: 'strategic',
+  silk: 'strategic',
+  purple_dye: 'strategic',
+  sulfur: 'strategic',
+  precious_gems: 'strategic'
 };
 
 // Human-friendly labels (español)
@@ -39,13 +61,36 @@ const RESOURCE_LABELS = {
   copper: 'Cobre',
   wool: 'Lana',
   honey: 'Miel',
-
+// etiquetas en español para recursos procesados añadidos
   lumber: 'Madera Procesada',
   tools: 'Herramientas',
+  iron_ingot: 'Lingote de Hierro',
+  beer: 'Cerveza',
+  baked_brick: 'Ladrillo Cocido',
+  textile: 'Textil',
+  silk_cloth: 'Telas de Seda',
+  salted: 'Salazonado',
+  refined_clay: 'Barro Refinado',
+  books: 'Libros',
+  purple_dye: 'Tintura Púrpura',
   silk: 'Seda',
   spice: 'Especias',
-  iron: 'Hierro',
+
+  //etiquetas en español para recursos especializados añadidos
+  damascus_steel: 'Acero de Damasco',
+  preservation_elixir: 'Elixir de Conservación',
+  explosive_compound: 'Compuesto Explosivo',
+  royal_dye: 'Tintura Real',
+  illustrated_parchment: 'Pergaminos Ilustrados',
+  magic_catalyst: 'Catalizador Mágico',
   gold: 'Oro'
+  ,
+  // etiquetas en español para recursos estratégicos añadidos
+  rare_iron: 'Hierro Raro',
+  sea_salt: 'Sal Marina',
+  purple_dye: 'Púrpura de Tiro',
+  sulfur: 'Azufre',
+  precious_gems: 'Gemas Preciosas'
 };
 
 module.exports = { RESOURCE_CATEGORIES, RESOURCE_LABELS };
