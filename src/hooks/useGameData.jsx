@@ -44,6 +44,7 @@ export const useGameData = () => {
         }
     }); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
+    const [buildCosts, setBuildCosts] = useState({}); // { [buildingType]: { cost, resources, canBuild, entityId } }
     
     // --- ESTADO DE UI / MENSAJES ---
     const [isLoading, setIsLoading] = useState(true);
@@ -181,6 +182,27 @@ export const useGameData = () => {
             return false;
         }
     }, [getAuthHeaders, displayMessage, normalizeUserFromResponse]);
+
+    // Fetch server-calculated build cost for a building type and cache it
+    const fetchBuildCost = useCallback(async (buildingType, entityId = null) => {
+        const token = localStorage.getItem('authToken');
+        if (!token) return null;
+        try {
+            const qs = `buildingType=${encodeURIComponent(buildingType)}` + (entityId ? `&entityId=${Number(entityId)}` : '');
+            const res = await fetch(`${API_BASE_URL}/build/cost?${qs}`, {
+                method: 'GET',
+                headers: getAuthHeaders(token)
+            });
+            if (!res.ok) {
+                return null;
+            }
+            const data = await res.json();
+            setBuildCosts(prev => ({ ...prev, [buildingType]: data }));
+            return data;
+        } catch (e) {
+            return null;
+        }
+    }, [getAuthHeaders]);
 
     // --- MANEJADORES DE ACCIONES ---
 
@@ -383,6 +405,8 @@ export const useGameData = () => {
         handleAuth,
         handleBuild,
         handleLogout,
+        buildCosts,
+        fetchBuildCost,
     };
 };
 

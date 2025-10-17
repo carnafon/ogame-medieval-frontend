@@ -58,6 +58,8 @@ export default function App() {
       onShowMap={() => setShowMap(true)}
       onLogout={handleLogout}
       uiMessage={uiMessage}
+      buildCosts={buildCosts}
+      fetchBuildCost={fetchBuildCost}
     />
   );
 }

@@ -3,6 +3,8 @@ import ResourceDisplay from './ResourceDisplay';
 import Card from './Card';
 import { BUILDING_DEFINITIONS } from '../hooks/useGameData';
 
+import React, { useEffect } from 'react';
+
 export default function HomeView({
   userData,
   buildings,
@@ -12,7 +14,16 @@ export default function HomeView({
   onShowMap,
   onLogout,
   uiMessage,
+  buildCosts = {},
+  fetchBuildCost,
 }) {
+
+  // Fetch server costs when user data changes
+  useEffect(() => {
+    if (!userData || !fetchBuildCost) return;
+    // fetch for all building types
+    Object.keys(BUILDING_DEFINITIONS).forEach(type => fetchBuildCost(type, userData.entity_id));
+  }, [userData, fetchBuildCost]);
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
       {/* --- Header --- */}
@@ -61,25 +72,30 @@ export default function HomeView({
       <section className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Construir Edificios</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(BUILDING_DEFINITIONS).map(([type, def]) => (
-            <Card key={type} title={def.name} description={def.description}>
-              <div className="mb-2">
-                <strong>Coste:</strong> 
-                <span> Madera: {def.cost.wood}, Piedra: {def.cost.stone}, Comida: {def.cost.food}</span>
-              </div>
-              <button
-                onClick={() => onBuild(type)}
-                disabled={!canBuild(def.cost)}
-                className={`px-3 py-1 rounded ${
-                  canBuild(def.cost)
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-gray-600 cursor-not-allowed'
-                }`}
-              >
-                Construir
-              </button>
-            </Card>
-          ))}
+          {Object.entries(BUILDING_DEFINITIONS).map(([type, def]) => {
+            const server = buildCosts[type];
+            const cost = server?.cost || def.cost;
+            const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
+            return (
+              <Card key={type} title={def.name} description={def.description}>
+                <div className="mb-2">
+                  <strong>Coste:</strong> 
+                  <span> Madera: {cost.wood}, Piedra: {cost.stone}, Comida: {cost.food}</span>
+                </div>
+                <button
+                  onClick={() => onBuild(type)}
+                  disabled={!enough}
+                  className={`px-3 py-1 rounded ${
+                    enough
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  Construir
+                </button>
+              </Card>
+            );
+          })}
         </div>
       </section>
 
