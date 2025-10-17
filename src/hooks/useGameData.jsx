@@ -369,30 +369,6 @@ export const useGameData = () => {
         checkSessionAndLoad();
     }, [fetchUserData]); 
 
-    // Efecto 2: Generación periódica de recursos
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        
-        if (user && storedToken) {
-            let timer;
-            
-            const startInterval = () => {
-                timer = setInterval(async () => {
-                    const success = await generateResources(storedToken);
-                    if (!success) {
-                        clearInterval(timer); 
-                    }
-                }, GENERATION_INTERVAL_MS);
-            };
-
-            // Ejecutamos la primera generación inmediatamente para actualizar el estado más rápido
-            generateResources(storedToken);
-            startInterval(); 
-            
-            return () => clearInterval(timer);
-        }
-    }, [user, generateResources]); 
-
 
     // Exportar el estado y las funciones
     return {
