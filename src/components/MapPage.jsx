@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import MapCanvas from "./MapCanvas";
+import CityDetail from "./CityDetail";
 import { API_BASE_URL } from "../hooks/useGameData";
 import { ArrowLeft } from "lucide-react";
 
@@ -8,6 +9,7 @@ export default function MapPage({ onBack, token }) {
   const [playerEntity, setPlayerEntity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
+    const [detailCity, setDetailCity] = useState(null);
 
   // 🛰️ Cargar datos del jugador y mapa
   useEffect(() => {
@@ -162,12 +164,18 @@ export default function MapPage({ onBack, token }) {
             {errorMsg}
           </div>
         )}
-        <MapCanvas
-          players={entities}
-          activeId={playerEntity?.id}
-          gridSize={100}
-          cellSize={20}
-        />
+        {!detailCity ? (
+          <MapCanvas
+            players={entities}
+            activeId={playerEntity?.id}
+            gridSize={100}
+            cellSize={20}
+            onShowDetails={(entity) => setDetailCity(entity)}
+          />
+        ) : (
+          // Lazy-load CityDetail
+          <CityDetail city={detailCity} onBack={() => setDetailCity(null)} />
+        )}
       </div>
     </div>
   );

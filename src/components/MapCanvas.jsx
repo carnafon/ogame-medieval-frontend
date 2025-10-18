@@ -5,6 +5,7 @@ export default function MapCanvas({
   activeId,
   gridSize = 100,
   cellSize = 20,
+  onShowDetails = null, // callback(entity)
 }) {
   const canvasRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
@@ -245,6 +246,16 @@ useEffect(() => {
     )}
   </div>
 )}
+      {selectedPlayer && onShowDetails && (
+        <div className="absolute" style={{ bottom: 16, left: 16 }}>
+          <button
+            onClick={() => onShowDetails(selectedPlayer)}
+            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded shadow"
+          >
+            Detalles
+          </button>
+        </div>
+      )}
       <button
         onClick={centerOnPlayer}
         className="absolute top-2 right-2 px-3 py-1 bg-blue-600 text-white rounded shadow"
