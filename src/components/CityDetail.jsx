@@ -8,66 +8,115 @@ export default function CityDetail({ entityId, token, onBack }) {
   const [error, setError] = useState(null);
   const [marketPrices, setMarketPrices] = useState({});
 
-  useEffect(() => {
-    const fetchCity = async () => {
-      if (!entityId) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API_BASE_URL}/entities/${entityId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          setError(err.message || `Error loading entity ${entityId}`);
-          setCity(null);
-        } else {
-          const data = await res.json();
-          // our backend returns resources array and population.breakdown
-          setCity(data);
-
-          // Fetch market prices for resources in this city
-          try {
-            const resources = Array.isArray(data.resources) ? data.resources : [];
-            if (resources.length > 0) {
-              const trades = [];
-              resources.forEach(r => {
-                const amt = Number(r.amount || 0);
-                // ask for buy and sell prices using current volume as amount
-                trades.push({ type: r.name, amount: amt, action: 'buy' });
-                trades.push({ type: r.name, amount: amt, action: 'sell' });
-              });
-
-              const mRes = await fetch(`${API_BASE_URL}/resources/market-price`, {
-                method: 'POST',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
-                body: JSON.stringify({ trades })
-              });
-              if (mRes.ok) {
-                const mData = await mRes.json();
-                // mData.results is array in same order as trades
-                const priceMap = {};
-                (mData.results || []).forEach(r => {
-                  const key = `${(r.type||'').toLowerCase()}:${(r.action||'').toLowerCase()}`;
-                  priceMap[key] = r;
-                });
-                setMarketPrices(priceMap);
-              }
-            }
-          } catch (mpErr) {
-            // ignore market price errors for now
-            console.warn('Failed to fetch market prices:', mpErr.message || mpErr);
-          }
-        }
-      } catch (e) {
-        setError(e.message);
+  // fetchCity is a reusable function so we can refresh after trades
+  const fetchCity = async () => {
+    if (!entityId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/entities/${entityId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err.message || `Error loading entity ${entityId}`);
         setCity(null);
-      } finally {
-        setLoading(false);
+      } else {
+        const data = await res.json();
+        // our backend returns resources array and population.breakdown
+        setCity(data);
+
+        // Fetch market prices for resources in this city
+        try {
+          const resources = Array.isArray(data.resources) ? data.resources : [];
+          if (resources.length > 0) {
+            const trades = [];
+            resources.forEach(r => {
+              const amt = Number(r.amount || 0);
+              // ask for buy and sell prices using current volume as amount
+              trades.push({ type: r.name, amount: amt, action: 'buy' });
+              trades.push({ type: r.name, amount: amt, action: 'sell' });
+            });
+
+            const mRes = await fetch(`${API_BASE_URL}/resources/market-price`, {
+              method: 'POST',
+              headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+              body: JSON.stringify({ trades })
+            });
+            if (mRes.ok) {
+              const mData = await mRes.json();
+              // mData.results is array in same order as trades
+              const priceMap = {};
+              (mData.results || []).forEach(r => {
+                const key = `${(r.type||'').toLowerCase()}:${(r.action||'').toLowerCase()}`;
+                priceMap[key] = r;
+              });
+              setMarketPrices(priceMap);
+            }
+          }
+        } catch (mpErr) {
+          // ignore market price errors for now
+          console.warn('Failed to fetch market prices:', mpErr.message || mpErr);
+        }
       }
-    };
+    } catch (e) {
+      setError(e.message);
+      setCity(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityId, token]);
+
+  const [tradeInProgress, setTradeInProgress] = useState(false);
+
+  // Helper to obtain current user's entity id via /me
+  const getMyEntityId = async () => {
+    try {
+      const t = token || localStorage.getItem('authToken');
+      if (!t) return null;
+      const res = await fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${t}` } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.entity?.id || data.entity_id || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const executeTrade = async ({ buyerId, sellerId, resourceName, price, amount = 1 }) => {
+    const t = token || localStorage.getItem('authToken');
+    if (!t) {
+      setError('Necesitas iniciar sesión para comerciar.');
+      return false;
+    }
+
+    setTradeInProgress(true);
+    try {
+      const resp = await fetch(`${API_BASE_URL}/resources/trade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` },
+        body: JSON.stringify({ buyerId, sellerId, resource: resourceName, price, amount })
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        setError(body.message || `Error ejecutando trade (${resp.status})`);
+        return false;
+      }
+      // success -> refresh city details
+      await fetchCity();
+      return true;
+    } catch (e) {
+      setError(e.message || 'Error ejecutando trade');
+      return false;
+    } finally {
+      setTradeInProgress(false);
+    }
+  };
 
   if (loading) return <div className="p-6 text-white">Cargando detalles...</div>;
   if (error) return (
@@ -142,9 +191,37 @@ export default function CityDetail({ entityId, token, onBack }) {
                         <div key={r.name} className="flex justify-between items-center bg-gray-800 p-2 rounded">
                           <div className="text-sm text-gray-300">{RESOURCE_LABELS[r.name] || (r.name.charAt(0).toUpperCase()+r.name.slice(1))}</div>
                           <div className="text-lg font-bold mx-3">{r.amount}</div>
-                          <div className="text-right text-xs text-gray-200">
-                            <div className="text-green-300">Vende: {sell?.price ?? '—'}</div>
-                            <div className="text-yellow-300">Compra: {buy?.price ?? '—'}</div>
+                          <div className="text-right text-xs text-gray-200 space-y-1">
+                            <div className="text-green-300">
+                              <button
+                                className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
+                                disabled={tradeInProgress}
+                                onClick={async () => {
+                                  // User sells to the city: buyer is city, seller is current user
+                                  const myEntity = await getMyEntityId();
+                                  if (!myEntity) { setError('Necesitas iniciar sesión para vender.'); return; }
+                                  const success = await executeTrade({ buyerId: entityId, sellerId: myEntity, resourceName: r.name, price: sell?.price ?? 0, amount: 1 });
+                                  if (success) {
+                                    // refresh handled by executeTrade
+                                  }
+                                }}
+                              >Vender: {sell?.price ?? '—'}</button>
+                            </div>
+                            <div className="text-yellow-300">
+                              <button
+                                className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs"
+                                disabled={tradeInProgress}
+                                onClick={async () => {
+                                  // User buys from the city: buyer is current user, seller is city
+                                  const myEntity = await getMyEntityId();
+                                  if (!myEntity) { setError('Necesitas iniciar sesión para comprar.'); return; }
+                                  const success = await executeTrade({ buyerId: myEntity, sellerId: entityId, resourceName: r.name, price: buy?.price ?? 0, amount: 1 });
+                                  if (success) {
+                                    // refresh handled by executeTrade
+                                  }
+                                }}
+                              >Comprar: {buy?.price ?? '—'}</button>
+                            </div>
                           </div>
                         </div>
                         );
