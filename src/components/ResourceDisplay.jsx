@@ -52,7 +52,8 @@ export default function ResourceDisplay(props) {
     common: {},
     processed: {},
     specialized: {},
-    strategic: {}
+    strategic: {},
+    gold: {}
   };
 
   // If we have resource types from the server, iterate them; otherwise fallback to keys in resources
@@ -88,6 +89,7 @@ export default function ResourceDisplay(props) {
         {renderCategory('Procesados', grouped.processed)}
         {renderCategory('Especializados', grouped.specialized)}
         {renderCategory('Estratégicos', grouped.strategic)}
+        {renderCategory('Oro', grouped.gold)}
       </div>
 
       {!popBreakdown ? (

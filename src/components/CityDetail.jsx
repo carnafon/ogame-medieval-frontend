@@ -58,12 +58,13 @@ export default function CityDetail({ entityId, token, onBack }) {
   }, {});
 
   // Order of columns we want to show
-  const columnOrder = ['common', 'processed', 'specialized', 'strategic', 'other'];
+  const columnOrder = ['common', 'processed', 'specialized', 'strategic', 'gold', 'other'];
   const COLUMN_LABELS = {
     common: 'Comunes',
     processed: 'Procesados',
     specialized: 'Especializados',
     strategic: 'Estratégicos',
+    gold: 'Oro',
     other: 'Otros'
   };
 
