@@ -145,7 +145,6 @@ export default function CityDetail({ entityId, token, onBack }) {
   if (error) return (
     <div className="p-6 text-white">
       <div>Error: {error}</div>
-      <button onClick={onBack} className="mt-2 px-3 py-1 bg-purple-600 rounded">Volver</button>
     </div>
   );
   if (!city) return null;
@@ -167,22 +166,26 @@ export default function CityDetail({ entityId, token, onBack }) {
 
   // Order of columns we want to show
   // Remove 'gold' from columns because gold is not a tradable resource here
-  const columnOrder = ['common', 'processed', 'specialized', 'strategic', 'other'];
+  const columnOrder = ['common', 'processed', 'specialized', 'strategic'];
   const COLUMN_LABELS = {
     common: 'Comunes',
     processed: 'Procesados',
     specialized: 'Especializados',
-    strategic: 'Estratégicos',
-    other: 'Otros'
+    strategic: 'Estratégicos'
   };
 
   return (
     // full-height container; content area scrolls if too tall
-    <div className="min-h-screen bg-gray-900 text-white p-4">
+    <div className="relative min-h-screen bg-gray-900 text-white p-4">
+      <button
+        onClick={onBack}
+        className="absolute top-5 left-5 z-50 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full flex items-center font-semibold shadow-lg shadow-purple-500/40 transition-all"
+      >
+        Volver
+      </button>
       <div className="w-full bg-gray-800 rounded-lg shadow-lg flex flex-col" style={{ minHeight: '80vh' }}>
           <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{city.city_ai_name || city.name || city.username || `Entidad ${city.id}`}</h2>
-          <button onClick={onBack} className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded">Volver</button>
         </div>
         <div className="px-6 pb-6 overflow-hidden">
             <div className="mb-4">
