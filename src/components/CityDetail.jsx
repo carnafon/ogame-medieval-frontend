@@ -150,12 +150,14 @@ export default function CityDetail({ entityId, token, onBack }) {
   );
   if (!city) return null;
 
-  const pop = city.populations || null;
-  const current_total = city.current_population ?? (pop ? ((pop.poor?.current_population||0) + (pop.burgess?.current_population||0) + (pop.patrician?.current_population||0)) : 0);
-  const max_total = city.max_population ?? (pop ? ((pop.poor?.max_population||0) + (pop.burgess?.max_population||0) + (pop.patrician?.max_population||0)) : 0);
+  // population is provided by the entities API as `population` (includes breakdown)
+  const pop = city.population || null;
+  const current_total = city.population?.current_population ?? city.current_population ?? (pop ? Object.values(pop.breakdown || {}).reduce((s, t) => s + (t?.current_population || 0), 0) : 0);
+  const max_total = city.population?.max_population ?? city.max_population ?? (pop ? Object.values(pop.breakdown || {}).reduce((s, t) => s + (t?.max_population || 0), 0) : 0);
 
   // Convert resources array to map-like display and group by category
-  const resources = Array.isArray(city.resources) ? city.resources : [];
+  // Exclude gold from the listed resource columns (gold is handled separately)
+  const resources = Array.isArray(city.resources) ? city.resources.filter(r => (r.name||'').toString().toLowerCase() !== 'gold') : [];
   const grouped = resources.reduce((acc, r) => {
     const key = RESOURCE_CATEGORIES[r.name] || 'other';
     if (!acc[key]) acc[key] = [];
@@ -164,13 +166,13 @@ export default function CityDetail({ entityId, token, onBack }) {
   }, {});
 
   // Order of columns we want to show
-  const columnOrder = ['common', 'processed', 'specialized', 'strategic', 'gold', 'other'];
+  // Remove 'gold' from columns because gold is not a tradable resource here
+  const columnOrder = ['common', 'processed', 'specialized', 'strategic', 'other'];
   const COLUMN_LABELS = {
     common: 'Comunes',
     processed: 'Procesados',
     specialized: 'Especializados',
     strategic: 'Estratégicos',
-    gold: 'Oro',
     other: 'Otros'
   };
 
@@ -178,8 +180,8 @@ export default function CityDetail({ entityId, token, onBack }) {
     // full-height container; content area scrolls if too tall
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="w-full bg-gray-800 rounded-lg shadow-lg flex flex-col" style={{ minHeight: '80vh' }}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">{city.name || city.username || `Entidad ${city.id}`}</h2>
+          <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">{city.city_ai_name || city.name || city.username || `Entidad ${city.id}`}</h2>
           <button onClick={onBack} className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded">Volver</button>
         </div>
         <div className="px-6 pb-6 overflow-hidden">
@@ -193,9 +195,12 @@ export default function CityDetail({ entityId, token, onBack }) {
             {pop && (
               <div className="mt-2">
                 <div className="font-semibold">Detalle por clase:</div>
-                <div className="text-sm">Pobres: {pop.poor?.current_population ?? 0} / {pop.poor?.max_population ?? 0}</div>
-                <div className="text-sm">Burgueses: {pop.burgess?.current_population ?? 0} / {pop.burgess?.max_population ?? 0}</div>
-                <div className="text-sm">Patricios: {pop.patrician?.current_population ?? 0} / {pop.patrician?.max_population ?? 0}</div>
+                {pop.breakdown && Object.entries(pop.breakdown).map(([type, info]) => (
+                  <div key={type} className="text-sm">{type.charAt(0).toUpperCase() + type.slice(1)}: {info?.current_population ?? 0} / {info?.max_population ?? 0}</div>
+                ))}
+                {!pop.breakdown && (
+                  <div className="text-sm">{pop.current_population ?? 0} / {pop.max_population ?? 0}</div>
+                )}
               </div>
             )}
           </div>
