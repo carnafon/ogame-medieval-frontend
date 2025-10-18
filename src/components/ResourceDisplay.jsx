@@ -45,7 +45,7 @@ export default function ResourceDisplay(props) {
     };
     fetchPop();
     return () => { mounted = false; };
-  }, [api]);
+  }, [api, entityId]);
 
   // Build a grouped structure by category using resourceTypes from backend
   const grouped = {
