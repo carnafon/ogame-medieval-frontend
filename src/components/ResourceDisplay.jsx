@@ -88,18 +88,35 @@ export default function ResourceDisplay(props) {
         {renderCategory('Estratégicos', grouped.strategic)}
       </div>
 
-      <div className="bg-gray-800 p-3 rounded shadow w-48">
-        <div className="font-semibold mb-2">Población</div>
-        {!popBreakdown ? (
+      {!popBreakdown ? (
+        <div className="bg-gray-800 p-3 rounded shadow w-48">
+          <div className="font-semibold mb-2">Población</div>
           <div>{population.current_population || 0} / {population.max_population || 0}</div>
-        ) : (
-          <div className="space-y-2">
-            <div className="text-sm">Pobres: {popBreakdown.poor?.current_population ?? 0} / {popBreakdown.poor?.max_population ?? 0} (disp: {popBreakdown.poor?.available_population ?? 0})</div>
-            <div className="text-sm">Burgueses: {popBreakdown.burgess?.current_population ?? 0} / {popBreakdown.burgess?.max_population ?? 0} (disp: {popBreakdown.burgess?.available_population ?? 0})</div>
-            <div className="text-sm">Patricios: {popBreakdown.patrician?.current_population ?? 0} / {popBreakdown.patrician?.max_population ?? 0} (disp: {popBreakdown.patrician?.available_population ?? 0})</div>
+        </div>
+      ) : (
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="bg-gray-800 p-3 rounded shadow w-full md:w-40">
+            <div className="font-semibold mb-2">Pobres</div>
+            <div className="text-sm">Disponible: <span className="font-medium">{popBreakdown.poor?.available_population ?? 0}</span></div>
+            <div className="text-sm">Actual: <span className="font-medium">{popBreakdown.poor?.current_population ?? 0}</span></div>
+            <div className="text-sm">Máx: <span className="font-medium">{popBreakdown.poor?.max_population ?? 0}</span></div>
           </div>
-        )}
-      </div>
+
+          <div className="bg-gray-800 p-3 rounded shadow w-full md:w-40">
+            <div className="font-semibold mb-2">Burgueses</div>
+            <div className="text-sm">Disponible: <span className="font-medium">{popBreakdown.burgess?.available_population ?? 0}</span></div>
+            <div className="text-sm">Actual: <span className="font-medium">{popBreakdown.burgess?.current_population ?? 0}</span></div>
+            <div className="text-sm">Máx: <span className="font-medium">{popBreakdown.burgess?.max_population ?? 0}</span></div>
+          </div>
+
+          <div className="bg-gray-800 p-3 rounded shadow w-full md:w-40">
+            <div className="font-semibold mb-2">Patricios</div>
+            <div className="text-sm">Disponible: <span className="font-medium">{popBreakdown.patrician?.available_population ?? 0}</span></div>
+            <div className="text-sm">Actual: <span className="font-medium">{popBreakdown.patrician?.current_population ?? 0}</span></div>
+            <div className="text-sm">Máx: <span className="font-medium">{popBreakdown.patrician?.max_population ?? 0}</span></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
