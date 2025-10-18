@@ -114,7 +114,9 @@ export default function HomeView({
                 {items.map(([type, def]) => {
                   const server = buildCosts[type];
                   const cost = server?.cost || def.cost;
-                  const enough = typeof server?.canBuild === 'boolean' ? server.canBuild : canBuild(cost);
+                  // Only enable if both server (if provided) and local check allow it.
+                  const serverAllows = typeof server?.canBuild === 'boolean' ? server.canBuild : true;
+                  const enough = serverAllows && canBuild(cost);
                   return (
                     <Card key={type} title={def.name} description={def.description} icon={def.icon}>
                       <div className="mb-2 text-sm text-gray-300">
