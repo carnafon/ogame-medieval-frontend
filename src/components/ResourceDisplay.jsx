@@ -60,6 +60,8 @@ export default function ResourceDisplay(props) {
 
   keysToRender.forEach(k => {
     const cat = RESOURCE_CATEGORIES[k] || 'common';
+    // ensure the category bucket exists (some categories may be dynamic)
+    if (!grouped[cat]) grouped[cat] = {};
     grouped[cat][k] = resources[k] || 0;
   });
 

@@ -39,7 +39,7 @@ const RESOURCE_CATEGORIES = {
 
   // strategic (ejemplos)
 
-  gold: 'gold',
+  gold: 'strategic',
   // recursos estratégicos añadidos por el usuario
   rare_iron: 'strategic',
   sea_salt: 'strategic',
