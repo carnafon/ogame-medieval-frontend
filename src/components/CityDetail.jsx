@@ -73,6 +73,7 @@ export default function CityDetail({ entityId, token, onBack }) {
   }, [entityId, token]);
 
   const [tradeInProgress, setTradeInProgress] = useState(false);
+  const [quantities, setQuantities] = useState({}); // { resourceName: qty }
 
   // Helper to obtain current user's entity id via /me
   const getMyEntityId = async () => {
@@ -191,20 +192,47 @@ export default function CityDetail({ entityId, token, onBack }) {
                         <div key={r.name} className="flex justify-between items-center bg-gray-800 p-2 rounded">
                           <div className="text-sm text-gray-300">{RESOURCE_LABELS[r.name] || (r.name.charAt(0).toUpperCase()+r.name.slice(1))}</div>
                           <div className="text-lg font-bold mx-3">{r.amount}</div>
+                          <div className="flex items-center space-x-2 mr-2">
+                            <button
+                              className="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs"
+                              onClick={() => {
+                                setQuantities(prev => ({ ...prev, [r.name]: Math.max(1, (prev[r.name] || 1) - 1) }));
+                              }}
+                              disabled={tradeInProgress}
+                            >-</button>
+                            <input
+                              type="number"
+                              min={1}
+                              value={quantities[r.name] || 1}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value || '1', 10) || 1;
+                                setQuantities(prev => ({ ...prev, [r.name]: Math.max(1, v) }));
+                              }}
+                              className="w-12 text-center rounded bg-gray-800 text-white border border-gray-600"
+                            />
+                            <button
+                              className="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs"
+                              onClick={() => {
+                                setQuantities(prev => ({ ...prev, [r.name]: (prev[r.name] || 1) + 1 }));
+                              }}
+                              disabled={tradeInProgress}
+                            >+</button>
+                          </div>
                           <div className="text-right text-xs text-gray-200 space-y-1">
                             <div className="text-green-300">
                               <button
                                 className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
                                 disabled={tradeInProgress}
                                 onClick={async () => {
-                                  // User sells to the city: buyer is city, seller is current user
-                                  const myEntity = await getMyEntityId();
-                                  if (!myEntity) { setError('Necesitas iniciar sesión para vender.'); return; }
-                                  const success = await executeTrade({ buyerId: entityId, sellerId: myEntity, resourceName: r.name, price: sell?.price ?? 0, amount: 1 });
-                                  if (success) {
-                                    // refresh handled by executeTrade
-                                  }
-                                }}
+                                    // User sells to the city: buyer is city, seller is current user
+                                    const myEntity = await getMyEntityId();
+                                    if (!myEntity) { setError('Necesitas iniciar sesión para vender.'); return; }
+                                    const qty = quantities[r.name] || 1;
+                                    const success = await executeTrade({ buyerId: entityId, sellerId: myEntity, resourceName: r.name, price: sell?.price ?? 0, amount: qty });
+                                    if (success) {
+                                      // refresh handled by executeTrade
+                                    }
+                                  }}
                               >Vender: {sell?.price ?? '—'}</button>
                             </div>
                             <div className="text-yellow-300">
@@ -212,14 +240,15 @@ export default function CityDetail({ entityId, token, onBack }) {
                                 className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs"
                                 disabled={tradeInProgress}
                                 onClick={async () => {
-                                  // User buys from the city: buyer is current user, seller is city
-                                  const myEntity = await getMyEntityId();
-                                  if (!myEntity) { setError('Necesitas iniciar sesión para comprar.'); return; }
-                                  const success = await executeTrade({ buyerId: myEntity, sellerId: entityId, resourceName: r.name, price: buy?.price ?? 0, amount: 1 });
-                                  if (success) {
-                                    // refresh handled by executeTrade
-                                  }
-                                }}
+                                    // User buys from the city: buyer is current user, seller is city
+                                    const myEntity = await getMyEntityId();
+                                    if (!myEntity) { setError('Necesitas iniciar sesión para comprar.'); return; }
+                                    const qty = quantities[r.name] || 1;
+                                    const success = await executeTrade({ buyerId: myEntity, sellerId: entityId, resourceName: r.name, price: buy?.price ?? 0, amount: qty });
+                                    if (success) {
+                                      // refresh handled by executeTrade
+                                    }
+                                  }}
                               >Comprar: {buy?.price ?? '—'}</button>
                             </div>
                           </div>
