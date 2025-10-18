@@ -297,7 +297,7 @@ export const useGameData = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [getAuthHeaders, displayMessage, user, saveBuildings, canBuild, fetchUserData]);
+    }, [getAuthHeaders, displayMessage, user, saveBuildings, canBuild, fetchUserData, buildMissingResourcesMessage]);
 
 
     const handleLogout = useCallback(() => {
