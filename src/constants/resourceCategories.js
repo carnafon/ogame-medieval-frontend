@@ -39,14 +39,15 @@ const RESOURCE_CATEGORIES = {
 
   // strategic (ejemplos)
 
-  gold: 'strategic',
+  gold: 'gold',
   // recursos estratégicos añadidos por el usuario
   rare_iron: 'strategic',
   sea_salt: 'strategic',
   linen: 'strategic',
   gold_dye: 'strategic',
   sulfur: 'strategic',
-  precious_gems: 'strategic'
+  precious_gems: 'strategic',
+  silk: 'strategic'
 };
 
 // Human-friendly labels (español)
