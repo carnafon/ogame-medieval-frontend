@@ -13,24 +13,6 @@ export default function MapCanvas({
   const [scale, setScale] = useState(1);
   const inertiaAnimRef = useRef(null);
 
-  // Inertia helper as stable callback so it can be referenced inside effects
-  const startInertia = useCallback((vx, vy) => {
-    // vx, vy are pixels per frame approximately
-    let velX = vx;
-    let velY = vy;
-    const friction = 0.92;
-
-    const step = () => {
-      // small threshold to stop
-      if (Math.abs(velX) < 0.2 && Math.abs(velY) < 0.2) return;
-      setOffset((prev) => clampOffset(prev.x + velX, prev.y + velY));
-      velX *= friction;
-      velY *= friction;
-      inertiaAnimRef.current = requestAnimationFrame(step);
-    };
-    inertiaAnimRef.current = requestAnimationFrame(step);
-  }, [clampOffset]);
-
   const mapPixelSize = gridSize * cellSize;
   const legendPadding = 28; // espacio para las coordenadas
   const edgePadding = Math.ceil(cellSize * 0.5); // padding para que celdas en el borde no queden cortadas
@@ -52,6 +34,24 @@ export default function MapCanvas({
     },
     [scale, dimensions, mapPixelSize, edgePadding]
   );
+
+  // Inertia helper as stable callback so it can be referenced inside effects
+  const startInertia = useCallback((vx, vy) => {
+    // vx, vy are pixels per frame approximately
+    let velX = vx;
+    let velY = vy;
+    const friction = 0.92;
+
+    const step = () => {
+      // small threshold to stop
+      if (Math.abs(velX) < 0.2 && Math.abs(velY) < 0.2) return;
+      setOffset((prev) => clampOffset(prev.x + velX, prev.y + velY));
+      velX *= friction;
+      velY *= friction;
+      inertiaAnimRef.current = requestAnimationFrame(step);
+    };
+    inertiaAnimRef.current = requestAnimationFrame(step);
+  }, [clampOffset]);
 
   useEffect(() => {
     const resize = () => {
