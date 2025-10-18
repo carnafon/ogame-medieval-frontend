@@ -94,7 +94,9 @@ export default function ResourceDisplay(props) {
           <div>{population.current_population || 0} / {population.max_population || 0}</div>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row gap-3">
+        <div>
+          <div className="font-semibold mb-2">Población</div>
+          <div className="flex flex-col md:flex-row gap-3">
           <div className="bg-gray-800 p-3 rounded shadow w-full md:w-40">
             <div className="font-semibold mb-2">Pobres</div>
             <div className="text-sm">Disponible: <span className="font-medium">{popBreakdown.poor?.available_population ?? 0}</span></div>
@@ -114,6 +116,7 @@ export default function ResourceDisplay(props) {
             <div className="text-sm">Disponible: <span className="font-medium">{popBreakdown.patrician?.available_population ?? 0}</span></div>
             <div className="text-sm">Actual: <span className="font-medium">{popBreakdown.patrician?.current_population ?? 0}</span></div>
             <div className="text-sm">Máx: <span className="font-medium">{popBreakdown.patrician?.max_population ?? 0}</span></div>
+          </div>
           </div>
         </div>
       )}
