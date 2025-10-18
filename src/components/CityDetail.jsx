@@ -1,18 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../hooks/useGameData';
 
-export default function CityDetail({ city, onBack }) {
+export default function CityDetail({ entityId, token, onBack }) {
+  const [city, setCity] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCity = async () => {
+      if (!entityId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/entities/${entityId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setError(err.message || `Error loading entity ${entityId}`);
+          setCity(null);
+        } else {
+          const data = await res.json();
+          // our backend returns resources array and population.breakdown
+          setCity(data);
+        }
+      } catch (e) {
+        setError(e.message);
+        setCity(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCity();
+  }, [entityId, token]);
+
+  if (loading) return <div className="p-6 text-white">Cargando detalles...</div>;
+  if (error) return (
+    <div className="p-6 text-white">
+      <div>Error: {error}</div>
+      <button onClick={onBack} className="mt-2 px-3 py-1 bg-purple-600 rounded">Volver</button>
+    </div>
+  );
   if (!city) return null;
 
-  // If populations are provided as structured populations object, prefer that
   const pop = city.populations || null;
   const current_total = city.current_population ?? (pop ? ((pop.poor?.current_population||0) + (pop.burgess?.current_population||0) + (pop.patrician?.current_population||0)) : 0);
   const max_total = city.max_population ?? (pop ? ((pop.poor?.max_population||0) + (pop.burgess?.max_population||0) + (pop.patrician?.max_population||0)) : 0);
 
-  const resources = [
-    { key: 'wood', label: 'Madera', amount: city.wood ?? 0 },
-    { key: 'stone', label: 'Piedra', amount: city.stone ?? 0 },
-    { key: 'food', label: 'Comida', amount: city.food ?? 0 },
-  ];
+  // Convert resources array to map-like display
+  const resources = Array.isArray(city.resources) ? city.resources : [];
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -37,11 +73,11 @@ export default function CityDetail({ city, onBack }) {
 
         <div>
           <h3 className="text-lg font-semibold mb-2">Recursos</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
             {resources.map(r => (
-              <div key={r.key} className="bg-gray-700 p-3 rounded">
-                <div className="text-sm text-gray-300">{r.label}</div>
-                <div className="text-xl font-bold">{r.amount}</div>
+              <div key={r.name} className="flex justify-between bg-gray-700 p-2 rounded">
+                <div className="text-sm text-gray-300">{r.name.charAt(0).toUpperCase()+r.name.slice(1)}</div>
+                <div className="text-lg font-bold">{r.amount}</div>
               </div>
             ))}
           </div>

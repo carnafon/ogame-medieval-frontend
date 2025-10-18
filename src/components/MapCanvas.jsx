@@ -244,18 +244,19 @@ useEffect(() => {
     ) : (
       <p><strong>Población:</strong> {selectedPlayer.current_population ?? 0}/{selectedPlayer.max_population ?? 0}</p>
     )}
+
+    {onShowDetails && (
+      <div className="mt-2">
+        <button
+          onClick={() => onShowDetails(selectedPlayer.id)}
+          className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+        >
+          Detalles
+        </button>
+      </div>
+    )}
   </div>
 )}
-      {selectedPlayer && onShowDetails && (
-        <div className="absolute" style={{ bottom: 16, left: 16 }}>
-          <button
-            onClick={() => onShowDetails(selectedPlayer)}
-            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded shadow"
-          >
-            Detalles
-          </button>
-        </div>
-      )}
       <button
         onClick={centerOnPlayer}
         className="absolute top-2 right-2 px-3 py-1 bg-blue-600 text-white rounded shadow"

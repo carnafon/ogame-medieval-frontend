@@ -170,11 +170,11 @@ export default function MapPage({ onBack, token }) {
             activeId={playerEntity?.id}
             gridSize={100}
             cellSize={20}
-            onShowDetails={(entity) => setDetailCity(entity)}
+            onShowDetails={(entityId) => setDetailCity(entityId)}
           />
         ) : (
-          // Lazy-load CityDetail
-          <CityDetail city={detailCity} onBack={() => setDetailCity(null)} />
+          // Lazy-load CityDetail (pass token and entityId)
+          <CityDetail entityId={detailCity} token={token} onBack={() => setDetailCity(null)} />
         )}
       </div>
     </div>
