@@ -199,14 +199,14 @@ export const useGameData = () => {
     // Comprueba si el usuario tiene suficientes recursos
     const canBuild = useCallback((cost) => {
         if (!user) return false;
-        // Asegura que los recursos existen y son suficientes
-        const wood = user.wood || 0;
-        const stone = user.stone || 0;
-        const food = user.food || 0;
-
-        return wood >= (cost.wood || 0) && 
-               stone >= (cost.stone || 0) && 
-               food >= (cost.food || 0);
+        // Use the normalized resources map so we don't rely on top-level legacy fields
+        const resources = user.resources || {};
+        for (const key of Object.keys(cost || {})) {
+            const need = Number(cost[key] || 0);
+            const have = Number(resources[key] || 0);
+            if (have < need) return false;
+        }
+        return true;
     }, [user]);
 
     // Manejador para la construcción
