@@ -209,6 +209,21 @@ export const useGameData = () => {
         return true;
     }, [user]);
 
+    // Helper: build a human-friendly missing resources message
+    const buildMissingResourcesMessage = useCallback((cost) => {
+        const resources = user?.resources || {};
+        const missing = [];
+        for (const key of Object.keys(cost || {})) {
+            const need = Number(cost[key] || 0);
+            const have = Number(resources[key] || 0);
+            if (have < need) missing.push({ key, need, have });
+        }
+        if (missing.length === 0) return null;
+        // Build message: list up to 2 missing resources, then 'y X más' if more
+        const parts = missing.map(m => `${m.key.charAt(0).toUpperCase() + m.key.slice(1)} (necesitas ${m.need}, tienes ${m.have})`);
+        return `Faltan recursos: ${parts.join(', ')}`;
+    }, [user]);
+
     // Manejador para la construcción
     const handleBuild = useCallback(async (buildingType) => {
         const storedToken = localStorage.getItem('authToken');
@@ -220,7 +235,8 @@ export const useGameData = () => {
         // Pre-check local resources to avoid unnecessary requests that will 400
         const costDef = BUILDING_DEFINITIONS[buildingType]?.cost;
         if (costDef && !canBuild(costDef)) {
-            displayMessage('No tienes recursos suficientes para construir (comprobación local).', 'error');
+            const msg = buildMissingResourcesMessage(costDef) || 'No tienes recursos suficientes para construir (comprobación local).';
+            displayMessage(msg, 'error');
             return;
         }
 
