@@ -11,6 +11,7 @@ export default function MapCanvas({
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+  const inertiaAnimRef = useRef(null);
 
   const mapPixelSize = gridSize * cellSize;
   const legendPadding = 28; // espacio para las coordenadas
@@ -145,9 +146,8 @@ export default function MapCanvas({
     let initialPinchScale = scale;
     let pinchCenterMap = { x: 0, y: 0 };
 
-    // Inertia
-    let moveHistory = []; // {t, x, y}
-    let inertiaAnim = null;
+  // Inertia
+  let moveHistory = []; // {t, x, y}
 
     const onMouseDown = (e) => {
       isDragging = true;
@@ -183,7 +183,7 @@ export default function MapCanvas({
     const onTouchStart = (e) => {
       if (!e.touches || e.touches.length === 0) return;
       // cancel inertia
-      if (inertiaAnim) { cancelAnimationFrame(inertiaAnim); inertiaAnim = null; }
+      if (inertiaAnimRef.current) { cancelAnimationFrame(inertiaAnimRef.current); inertiaAnimRef.current = null; }
 
       if (e.touches.length === 1) {
         isTouchDragging = true;
@@ -207,7 +207,7 @@ export default function MapCanvas({
       }
     };
     const onTouchMove = (e) => {
-      if (isPinching && e.touches && e.touches.length === 2) {
+  if (isPinching && e.touches && e.touches.length === 2) {
         // pinch-to-zoom
         e.preventDefault();
         const t0 = e.touches[0];
@@ -278,7 +278,7 @@ export default function MapCanvas({
   canvas.addEventListener('touchmove', onTouchMove, { passive: false });
   canvas.addEventListener('touchend', onTouchEnd, { passive: true });
 
-    return () => {
+  return () => {
       canvas.removeEventListener("mousedown", onMouseDown);
       canvas.removeEventListener("mousemove", onMouseMove);
       canvas.removeEventListener("mouseup", onMouseUp);
@@ -287,7 +287,7 @@ export default function MapCanvas({
       canvas.removeEventListener('touchstart', onTouchStart);
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('touchend', onTouchEnd);
-      if (inertiaAnim) cancelAnimationFrame(inertiaAnim);
+      if (inertiaAnimRef.current) cancelAnimationFrame(inertiaAnimRef.current);
     };
   }, [clampOffset]);
 
@@ -304,9 +304,9 @@ export default function MapCanvas({
       setOffset((prev) => clampOffset(prev.x + velX, prev.y + velY));
       velX *= friction;
       velY *= friction;
-      inertiaAnim = requestAnimationFrame(step);
+      inertiaAnimRef.current = requestAnimationFrame(step);
     };
-    inertiaAnim = requestAnimationFrame(step);
+    inertiaAnimRef.current = requestAnimationFrame(step);
   }
 
   const centerOnPlayer = () => {
