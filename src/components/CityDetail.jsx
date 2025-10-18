@@ -7,6 +7,7 @@ export default function CityDetail({ entityId, token, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [marketPrices, setMarketPrices] = useState({});
+  const [myResources, setMyResources] = useState(null);
 
   // fetchCity is a reusable function so we can refresh after trades
   const fetchCity = async () => {
@@ -26,7 +27,7 @@ export default function CityDetail({ entityId, token, onBack }) {
         // our backend returns resources array and population.breakdown
         setCity(data);
 
-        // Fetch market prices for resources in this city
+  // Fetch market prices for resources in this city
         try {
           const resources = Array.isArray(data.resources) ? data.resources : [];
           if (resources.length > 0) {
@@ -57,6 +58,27 @@ export default function CityDetail({ entityId, token, onBack }) {
         } catch (mpErr) {
           // ignore market price errors for now
           console.warn('Failed to fetch market prices:', mpErr.message || mpErr);
+        }
+        // Also fetch current user's resources (if logged in)
+        try {
+          const t = token || localStorage.getItem('authToken');
+          if (t) {
+            const meRes = await fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${t}` } });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              const myEntityId = meData.entity?.id || meData.entity_id || null;
+              if (myEntityId) {
+                const rRes = await fetch(`${API_BASE_URL}/resources?entityId=${myEntityId}`, { headers: { Authorization: `Bearer ${t}` } });
+                if (rRes.ok) {
+                  const rData = await rRes.json().catch(() => ({}));
+                  setMyResources(rData.resources || {});
+                }
+              }
+            }
+          }
+        } catch (uErr) {
+          // ignore user resources fetch errors
+          console.warn('Failed to fetch user resources:', uErr.message || uErr);
         }
       }
     } catch (e) {
@@ -161,9 +183,13 @@ export default function CityDetail({ entityId, token, onBack }) {
           <button onClick={onBack} className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded">Volver</button>
         </div>
         <div className="px-6 pb-6 overflow-hidden">
-          <div className="mb-4">
+            <div className="mb-4">
             <div><strong>Facción:</strong> {city.faction_name || 'N/A'}</div>
-            <div className="mt-2"><strong>Población:</strong> {current_total} / {max_total}</div>
+            <div className="mt-2 flex items-center space-x-6">
+              <div><strong>Población:</strong> {current_total} / {max_total}</div>
+              <div className="ml-4 text-sm"><span className="font-semibold">Oro de la ciudad:</span> { (city.resources || []).find(r=> (r.name||'').toLowerCase()==='gold')?.amount ?? '—' }</div>
+              <div className="ml-4 text-sm"><span className="font-semibold">Tu oro:</span> { myResources ? (myResources.gold ?? '—') : '—' }</div>
+            </div>
             {pop && (
               <div className="mt-2">
                 <div className="font-semibold">Detalle por clase:</div>
@@ -190,7 +216,11 @@ export default function CityDetail({ entityId, token, onBack }) {
                         const sell = marketPrices[keySell];
                         return (
                         <div key={r.name} className="flex justify-between items-center bg-gray-800 p-2 rounded">
-                          <div className="text-sm text-gray-300">{RESOURCE_LABELS[r.name] || (r.name.charAt(0).toUpperCase()+r.name.slice(1))}</div>
+                          <div className="text-sm text-gray-300 w-40">
+                            <div className="font-medium">{RESOURCE_LABELS[r.name] || (r.name.charAt(0).toUpperCase()+r.name.slice(1))}</div>
+                            <div className="text-xs text-gray-400">Ciudad: {r.amount}</div>
+                            <div className="text-xs text-gray-400">Tú: { myResources ? (myResources[r.name?.toLowerCase()] ?? 0) : '—' }</div>
+                          </div>
                           <div className="text-lg font-bold mx-3">{r.amount}</div>
                           <div className="flex items-center space-x-2 mr-2">
                             <button
