@@ -196,33 +196,72 @@ export const useGameData = () => {
             return false;
         }
     }, [fetchUserData, displayMessage, normalizeUserFromResponse, saveBuildings]);
-    // Comprueba si el usuario tiene suficientes recursos
-    const canBuild = useCallback((cost) => {
+    // Comprueba si el usuario tiene suficientes recursos y población disponible
+    // cost: resource cost object
+    // buildingType: optional building type string (used to determine population need)
+    const canBuild = useCallback((cost, buildingType = null) => {
         if (!user) return false;
-        // Use the normalized resources map so we don't rely on top-level legacy fields
+
+        // If server-provided cost info exists for this building, prefer it
+        const server = buildingType ? buildCosts[buildingType] : null;
+        if (server && typeof server.canBuild === 'boolean') {
+            // Server.canBuild reflects resource availability; still check population using server fields
+            const popNeeded = typeof server.popNeeded === 'number' ? server.popNeeded : (buildingType === 'house' ? 0 : 1);
+            const popAvailable = Number(server.popAvailable ?? population?.available_population ?? population?.available ?? 0);
+            return server.canBuild && popAvailable >= popNeeded;
+        }
+
+        // Fallback: local resource check
         const resources = user.resources || {};
         for (const key of Object.keys(cost || {})) {
             const need = Number(cost[key] || 0);
             const have = Number(resources[key] || 0);
             if (have < need) return false;
         }
+
+        // Fallback population rule if server info not available
+        const popNeeded = buildingType === 'house' ? 0 : 1;
+        const havePop = Number(population?.available_population ?? population?.available ?? 0);
+        if (havePop < popNeeded) return false;
+
         return true;
-    }, [user]);
+    }, [user, population, buildCosts]);
 
     // Helper: build a human-friendly missing resources message
-    const buildMissingResourcesMessage = useCallback((cost) => {
-        const resources = user?.resources || {};
+    const buildMissingResourcesMessage = useCallback((cost, buildingType = null) => {
+        // Prefer server-side data if available
+        const server = buildingType ? buildCosts[buildingType] : null;
         const missing = [];
-        for (const key of Object.keys(cost || {})) {
-            const need = Number(cost[key] || 0);
-            const have = Number(resources[key] || 0);
-            if (have < need) missing.push({ key, need, have });
+
+        if (server && server.cost && server.resources) {
+            // Server gives current resources and computed cost — compute diffs
+            const scost = server.cost || {};
+            const sres = server.resources || {};
+            for (const key of Object.keys(scost || {})) {
+                const need = Number(scost[key] || 0);
+                const have = Number(sres[key] || 0);
+                if (have < need) missing.push({ key, need, have });
+            }
+            const popNeeded = typeof server.popNeeded === 'number' ? server.popNeeded : (buildingType === 'house' ? 0 : 1);
+            const popAvailable = Number(server.popAvailable ?? population?.available_population ?? population?.available ?? 0);
+            if (popAvailable < popNeeded) missing.push({ key: 'población', need: popNeeded, have: popAvailable });
+        } else {
+            const resources = user?.resources || {};
+            for (const key of Object.keys(cost || {})) {
+                const need = Number(cost[key] || 0);
+                const have = Number(resources[key] || 0);
+                if (have < need) missing.push({ key, need, have });
+            }
+            // Check population shortfall fallback
+            const popNeeded = buildingType === 'house' ? 0 : 1;
+            const havePop = Number(population?.available_population ?? population?.available ?? 0);
+            if (havePop < popNeeded) missing.push({ key: 'población', need: popNeeded, have: havePop });
         }
+
         if (missing.length === 0) return null;
-        // Build message: list up to 2 missing resources, then 'y X más' if more
         const parts = missing.map(m => `${m.key.charAt(0).toUpperCase() + m.key.slice(1)} (necesitas ${m.need}, tienes ${m.have})`);
-        return `Faltan recursos: ${parts.join(', ')}`;
-    }, [user]);
+        return `Faltan: ${parts.join(', ')}`;
+    }, [user, population, buildCosts]);
 
     // Manejador para la construcción
     const handleBuild = useCallback(async (buildingType) => {
@@ -234,8 +273,8 @@ export const useGameData = () => {
         
         // Pre-check local resources to avoid unnecessary requests that will 400
         const costDef = BUILDING_DEFINITIONS[buildingType]?.cost;
-        if (costDef && !canBuild(costDef)) {
-            const msg = buildMissingResourcesMessage(costDef) || 'No tienes recursos suficientes para construir (comprobación local).';
+        if (costDef && !canBuild(costDef, buildingType)) {
+            const msg = buildMissingResourcesMessage(costDef, buildingType) || 'No tienes recursos suficientes para construir (comprobación local).';
             displayMessage(msg, 'error');
             return;
         }

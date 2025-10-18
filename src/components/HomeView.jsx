@@ -116,7 +116,10 @@ export default function HomeView({
                   const cost = server?.cost || def.cost;
                   // Only enable if both server (if provided) and local check allow it.
                   const serverAllows = typeof server?.canBuild === 'boolean' ? server.canBuild : true;
-                  const enough = serverAllows && canBuild(cost);
+                  // Prefer server pop info
+                  const popNeeded = typeof server?.popNeeded === 'number' ? server.popNeeded : (type === 'house' ? 0 : 1);
+                  const popAvailable = Number(server?.popAvailable ?? population?.available_population ?? population?.available ?? 0);
+                  const enough = serverAllows && (popAvailable >= popNeeded) && canBuild(cost, type);
                   return (
                     <Card key={type} title={def.name} description={def.description} icon={def.icon}>
                       <div className="mb-2 text-sm text-gray-300">
@@ -125,6 +128,14 @@ export default function HomeView({
                           {cost.wood > 0 && `Madera: ${cost.wood} `}
                           {cost.stone > 0 && `Piedra: ${cost.stone} `}
                           {cost.food > 0 && `Comida: ${cost.food}`}
+                        </span>
+                      </div>
+
+                      {/* Mostrar necesidad de población para el siguiente nivel */}
+                      <div className="mb-2 text-sm text-gray-300">
+                        <strong>Población requerida:</strong>
+                        <span className="ml-2">
+                          {popNeeded === 0 ? 'Ninguna (casa aumenta capacidad)' : `${popNeeded} disponible (tienes ${popAvailable})`}
                         </span>
                       </div>
 
