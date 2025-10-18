@@ -95,6 +95,7 @@ export default function HomeView({
           <ResourceDisplay
             resources={userData.resources || { wood: userData.wood || 0, stone: userData.stone || 0, food: userData.food || 0 }}
             population={mergedPopulation}
+            entityId={userData.entity_id}
           />
         </div>
       </section>

@@ -6,8 +6,10 @@ import ResourceIcon from './ResourceIcon';
 export default function ResourceDisplay(props) {
   const resources = props.resources || {};
   const population = props.population || {};
+  const entityId = props.entityId || null;
   const api = useApi();
   const [resourceTypes, setResourceTypes] = useState([]); // array of {id,name}
+  const [popBreakdown, setPopBreakdown] = useState(null); // { poor: {...}, burgess: {...}, patrician: {...} }
 
   useEffect(() => {
     let mounted = true;
@@ -24,6 +26,24 @@ export default function ResourceDisplay(props) {
       }
     };
     fetchTypes();
+    // Fetch population breakdown for entity if available
+    const fetchPop = async () => {
+      if (!entityId) return;
+      try {
+        const token = localStorage.getItem('authToken');
+        const url = `/population?entityId=${encodeURIComponent(entityId)}`;
+        const res = await api.get(url, token);
+        if (!mounted) return;
+        if (res && res.types) {
+          const map = {};
+          res.types.forEach(t => { map[t.type] = t; });
+          setPopBreakdown(map);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchPop();
     return () => { mounted = false; };
   }, [api]);
 
@@ -70,7 +90,15 @@ export default function ResourceDisplay(props) {
 
       <div className="bg-gray-800 p-3 rounded shadow w-48">
         <div className="font-semibold mb-2">Población</div>
-        <div>{population.current_population || 0} / {population.max_population || 0}</div>
+        {!popBreakdown ? (
+          <div>{population.current_population || 0} / {population.max_population || 0}</div>
+        ) : (
+          <div className="space-y-2">
+            <div className="text-sm">Pobres: {popBreakdown.poor?.current_population ?? 0} / {popBreakdown.poor?.max_population ?? 0} (disp: {popBreakdown.poor?.available_population ?? 0})</div>
+            <div className="text-sm">Burgueses: {popBreakdown.burgess?.current_population ?? 0} / {popBreakdown.burgess?.max_population ?? 0} (disp: {popBreakdown.burgess?.available_population ?? 0})</div>
+            <div className="text-sm">Patricios: {popBreakdown.patrician?.current_population ?? 0} / {popBreakdown.patrician?.max_population ?? 0} (disp: {popBreakdown.patrician?.available_population ?? 0})</div>
+          </div>
+        )}
       </div>
     </div>
   );

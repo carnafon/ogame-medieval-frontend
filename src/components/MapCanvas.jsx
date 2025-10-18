@@ -221,7 +221,7 @@ useEffect(() => {
         className="border border-gray-500 rounded-lg bg-black w-full h-full"
       />
       {selectedPlayer && (
-  <div className="absolute bg-gray-900 text-white p-2 rounded shadow-lg">
+    <div className="absolute bg-gray-900 text-white p-2 rounded shadow-lg">
     <p><strong>Usuario:</strong> {selectedPlayer.username || selectedPlayer.name || selectedPlayer.id}</p>
     <p><strong>Facción:</strong> {selectedPlayer.faction_name || 'N/A'}</p>
     <p><strong>Recursos:</strong> 
@@ -233,7 +233,16 @@ useEffect(() => {
         </>
       
     </p>
-    <p><strong>Población:</strong> {selectedPlayer.current_population ?? 0}/{selectedPlayer.max_population ?? 0}</p>
+    {selectedPlayer.populations ? (
+      <div>
+        <div className="font-semibold">Población</div>
+        <div className="text-sm">Pobres: {selectedPlayer.populations.poor?.current_population ?? selectedPlayer.current_population ?? 0}/{selectedPlayer.populations.poor?.max_population ?? selectedPlayer.max_population ?? 0}</div>
+        <div className="text-sm">Burgueses: {selectedPlayer.populations.burgess?.current_population ?? 0}/{selectedPlayer.populations.burgess?.max_population ?? 0}</div>
+        <div className="text-sm">Patricios: {selectedPlayer.populations.patrician?.current_population ?? 0}/{selectedPlayer.populations.patrician?.max_population ?? 0}</div>
+      </div>
+    ) : (
+      <p><strong>Población:</strong> {selectedPlayer.current_population ?? 0}/{selectedPlayer.max_population ?? 0}</p>
+    )}
   </div>
 )}
       <button
