@@ -6,6 +6,7 @@ export default function CityDetail({ entityId, token, onBack }) {
   const [city, setCity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [marketPrices, setMarketPrices] = useState({});
 
   useEffect(() => {
     const fetchCity = async () => {
@@ -24,6 +25,39 @@ export default function CityDetail({ entityId, token, onBack }) {
           const data = await res.json();
           // our backend returns resources array and population.breakdown
           setCity(data);
+
+          // Fetch market prices for resources in this city
+          try {
+            const resources = Array.isArray(data.resources) ? data.resources : [];
+            if (resources.length > 0) {
+              const trades = [];
+              resources.forEach(r => {
+                const amt = Number(r.amount || 0);
+                // ask for buy and sell prices using current volume as amount
+                trades.push({ type: r.name, amount: amt, action: 'buy' });
+                trades.push({ type: r.name, amount: amt, action: 'sell' });
+              });
+
+              const mRes = await fetch(`${API_BASE_URL}/resources/market-price`, {
+                method: 'POST',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+                body: JSON.stringify({ trades })
+              });
+              if (mRes.ok) {
+                const mData = await mRes.json();
+                // mData.results is array in same order as trades
+                const priceMap = {};
+                (mData.results || []).forEach(r => {
+                  const key = `${(r.type||'').toLowerCase()}:${(r.action||'').toLowerCase()}`;
+                  priceMap[key] = r;
+                });
+                setMarketPrices(priceMap);
+              }
+            }
+          } catch (mpErr) {
+            // ignore market price errors for now
+            console.warn('Failed to fetch market prices:', mpErr.message || mpErr);
+          }
         }
       } catch (e) {
         setError(e.message);
@@ -99,12 +133,22 @@ export default function CityDetail({ entityId, token, onBack }) {
                   <div key={col} className="bg-gray-700 rounded p-3 w-full">
                     <div className="font-semibold mb-2 text-sm">{COLUMN_LABELS[col] || col}</div>
                     <div className="space-y-2">
-                      {(grouped[col] || []).map(r => (
+                      {(grouped[col] || []).map(r => {
+                        const keyBuy = `${(r.name||'').toLowerCase()}:buy`;
+                        const keySell = `${(r.name||'').toLowerCase()}:sell`;
+                        const buy = marketPrices[keyBuy];
+                        const sell = marketPrices[keySell];
+                        return (
                         <div key={r.name} className="flex justify-between items-center bg-gray-800 p-2 rounded">
                           <div className="text-sm text-gray-300">{RESOURCE_LABELS[r.name] || (r.name.charAt(0).toUpperCase()+r.name.slice(1))}</div>
-                          <div className="text-lg font-bold">{r.amount}</div>
+                          <div className="text-lg font-bold mx-3">{r.amount}</div>
+                          <div className="text-right text-xs text-gray-200">
+                            <div className="text-green-300">Vende: {sell?.price ?? '—'}</div>
+                            <div className="text-yellow-300">Compra: {buy?.price ?? '—'}</div>
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       {(!grouped[col] || grouped[col].length === 0) && (
                         <div className="text-xs text-gray-400 italic">—</div>
                       )}
