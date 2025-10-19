@@ -8,6 +8,20 @@ export const BUILDING_DEFINITIONS = {
     description: 'Aumenta el límite de población y la moral.',
     category: 'common'
   },
+  casa_de_piedra: {
+    name: 'Casa de Piedra',
+    icon: Home,
+    cost: { lumber: 10, baked_brick: 5 },
+    description: 'Vivienda robusta que aumenta la capacidad para burgueses.',
+    category: 'common'
+  },
+  casa_de_ladrillos: {
+    name: 'Casa de Ladrillos',
+    icon: Home,
+    cost: { magic_catalyst: 4, linen: 3 },
+    description: 'Vivienda lujosa que aumenta la capacidad para patricios.',
+    category: 'common'
+  },
   sawmill: {
     name: 'Aserradero',
     icon: Factory,
