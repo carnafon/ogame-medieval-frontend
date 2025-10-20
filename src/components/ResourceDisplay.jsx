@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
+import { RESOURCE_CATEGORIES as LOCAL_RESOURCE_CATEGORIES, RESOURCE_LABELS } from '../constants/resourceCategories';
 import { useApi } from '../hooks/useApi';
 import ResourceIcon from './ResourceIcon';
 
@@ -48,6 +48,7 @@ export default function ResourceDisplay(props) {
   }, [api, entityId]);
 
   // Build a grouped structure by category using resourceTypes from backend
+  const categories = props.resourceCategories || LOCAL_RESOURCE_CATEGORIES;
   const grouped = {
     common: {},
     processed: {},
@@ -60,7 +61,7 @@ export default function ResourceDisplay(props) {
   const keysToRender = resourceTypes.length > 0 ? resourceTypes.map(rt => rt.name.toLowerCase()) : Object.keys(resources);
 
   keysToRender.forEach(k => {
-    const cat = RESOURCE_CATEGORIES[k] || 'common';
+    const cat = (categories && categories[k]) ? categories[k] : 'common';
     // ensure the category bucket exists (some categories may be dynamic)
     if (!grouped[cat]) grouped[cat] = {};
     grouped[cat][k] = resources[k] || 0;

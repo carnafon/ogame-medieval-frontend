@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import ResourceDisplay from './ResourceDisplay';
 import Card from './Card';
 import { BUILDING_DEFINITIONS } from '../hooks/useGameData';
-import { PRODUCTION_RATES } from '../constants/productionRates';
+import { PRODUCTION_RATES as LOCAL_PRODUCTION_RATES } from '../constants/productionRates';
 import { perTickToPerMinute, perTickToPerHour } from '../utils/productionUtils';
 
 export default function HomeView({
@@ -16,6 +16,7 @@ export default function HomeView({
   uiMessage,
   buildCosts = {},
   fetchBuildCost,
+  gameConstants = null,
 }) {
 
   // Fetch server costs when user data changes
@@ -96,6 +97,7 @@ export default function HomeView({
             resources={userData.resources || { wood: userData.wood || 0, stone: userData.stone || 0, food: userData.food || 0 }}
             population={mergedPopulation}
             entityId={userData.entity_id}
+            resourceCategories={gameConstants?.resourceCategories}
           />
         </div>
       </section>
@@ -140,11 +142,12 @@ export default function HomeView({
                       </div>
 
                       {/* Producción por tick si existe */}
-                      {PRODUCTION_RATES[type] && Object.keys(PRODUCTION_RATES[type]).length > 0 && (
+                      {/* Prefer server productionRates if provided, else local */}
+                      {(gameConstants?.productionRates?.[type] || LOCAL_PRODUCTION_RATES[type]) && Object.keys((gameConstants?.productionRates?.[type] || LOCAL_PRODUCTION_RATES[type])).length > 0 && (
                         <div className="mb-2 text-sm text-gray-400">
-                          <div><strong>Producción/tick:</strong> <span className="ml-2">{Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${val > 0 ? '+' : ''}${val} ${res}`).join(', ')}</span></div>
-                          <div className="text-xs text-gray-500 mt-1">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerMinute(val)} ${res}/min`).join(', ')})</div>
-                          <div className="text-xs text-gray-500">(≈ {Object.entries(PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerHour(val)} ${res}/hr`).join(', ')})</div>
+                          <div><strong>Producción/tick:</strong> <span className="ml-2">{Object.entries(gameConstants?.productionRates?.[type] || LOCAL_PRODUCTION_RATES[type]).map(([res, val]) => `${val > 0 ? '+' : ''}${val} ${res}`).join(', ')}</span></div>
+                          <div className="text-xs text-gray-500 mt-1">(≈ {Object.entries(gameConstants?.productionRates?.[type] || LOCAL_PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerMinute(val)} ${res}/min`).join(', ')})</div>
+                          <div className="text-xs text-gray-500">(≈ {Object.entries(gameConstants?.productionRates?.[type] || LOCAL_PRODUCTION_RATES[type]).map(([res, val]) => `${perTickToPerHour(val)} ${res}/hr`).join(', ')})</div>
                         </div>
                       )}
 

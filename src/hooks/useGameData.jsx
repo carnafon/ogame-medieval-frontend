@@ -26,6 +26,7 @@ export const useGameData = () => {
     }); 
     const [population, setPopulation] = useState({ current_population: 0, max_population: 0, available_population: 0 });
     const [buildCosts, setBuildCosts] = useState({}); // { [buildingType]: { cost, resources, canBuild, entityId } }
+    const [gameConstants, setGameConstants] = useState(null);
     
     // --- ESTADO DE UI / MENSAJES ---
     const [isLoading, setIsLoading] = useState(true);
@@ -143,6 +144,28 @@ export const useGameData = () => {
             return null;
         }
     }, [getAuthHeaders]);
+
+    // Fetch global game constants (production rates, processing recipes, categories, building costs)
+    useEffect(() => {
+        let mounted = true;
+        const fetchConstants = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/game/constants`);
+                if (!mounted) return;
+                if (!res.ok) return;
+                const data = await res.json();
+                setGameConstants(data);
+                // If backend provided buildingCosts, merge into local buildCosts initial cache
+                if (data && data.buildingCosts) {
+                    setBuildCosts(prev => ({ ...Object.fromEntries(Object.keys(data.buildingCosts).map(k => [k, { cost: data.buildingCosts[k], canBuild: true }])), ...prev }));
+                }
+            } catch (e) {
+                // ignore
+            }
+        };
+        fetchConstants();
+        return () => { mounted = false; };
+    }, []);
 
     // --- MANEJADORES DE ACCIONES ---
 
@@ -377,6 +400,8 @@ export const useGameData = () => {
         handleLogout,
         buildCosts,
         fetchBuildCost,
+        // expose server constants for components to prefer (may be null if fetch failed)
+        gameConstants,
     };
 };
 

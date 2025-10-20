@@ -17,6 +17,7 @@ export default function App() {
     handleLogout,
     buildCosts,
     fetchBuildCost,
+    gameConstants,
   } = useGameData();
 
   const [showMap, setShowMap] = React.useState(false);
@@ -62,6 +63,7 @@ export default function App() {
       uiMessage={uiMessage}
       buildCosts={buildCosts}
       fetchBuildCost={fetchBuildCost}
+      gameConstants={gameConstants}
     />
   );
 }
