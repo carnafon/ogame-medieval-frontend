@@ -12,6 +12,11 @@ export default function MapCanvas({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const inertiaAnimRef = useRef(null);
+  const offsetRef = useRef(offset);
+  const rafRef = useRef(null);
+  const draggingRef = useRef(false);
+  const lastPosRef = useRef({ x: 0, y: 0 });
+  const moveHistoryRef = useRef([]);
 
   const mapPixelSize = gridSize * cellSize;
   const legendPadding = 28; // espacio para las coordenadas
@@ -45,7 +50,11 @@ export default function MapCanvas({
     const step = () => {
       // small threshold to stop
       if (Math.abs(velX) < 0.2 && Math.abs(velY) < 0.2) return;
-      setOffset((prev) => clampOffset(prev.x + velX, prev.y + velY));
+      setOffset((prev) => {
+        const next = clampOffset(prev.x + velX, prev.y + velY);
+        offsetRef.current = next;
+        return next;
+      });
       velX *= friction;
       velY *= friction;
       inertiaAnimRef.current = requestAnimationFrame(step);
@@ -151,130 +160,53 @@ export default function MapCanvas({
   // ▪ Panning y Zoom
   useEffect(() => {
     const canvas = canvasRef.current;
-    let isDragging = false;
-    let lastPos = { x: 0, y: 0 };
+    if (!canvas) return;
 
-    // For touch support
-    let isTouchDragging = false;
-    let lastTouch = { x: 0, y: 0 };
-
-    // Pinch state
-    let isPinching = false;
-    let initialPinchDist = 0;
-    let initialPinchScale = scale;
-    let pinchCenterMap = { x: 0, y: 0 };
-
-  // Inertia
-  let moveHistory = []; // {t, x, y}
-
-    const onMouseDown = (e) => {
-      isDragging = true;
-      lastPos = { x: e.clientX, y: e.clientY };
-      moveHistory = [{ t: Date.now(), x: e.clientX, y: e.clientY }];
-    };
-    const onMouseMove = (e) => {
-      if (!isDragging) return;
-      const dx = e.clientX - lastPos.x;
-      const dy = e.clientY - lastPos.y;
-      setOffset((prev) => clampOffset(prev.x + dx, prev.y + dy));
-      lastPos = { x: e.clientX, y: e.clientY };
-      moveHistory.push({ t: Date.now(), x: e.clientX, y: e.clientY });
-      if (moveHistory.length > 10) moveHistory.shift();
-    };
-    const onMouseUp = () => {
-      isDragging = false;
-      // compute inertia based on recent history
-      if (moveHistory.length >= 2) {
-        const last = moveHistory[moveHistory.length - 1];
-        let i = moveHistory.length - 2;
-        // find a point ~50ms earlier
-        while (i >= 0 && last.t - moveHistory[i].t < 30) i--;
-        const prev = moveHistory[Math.max(0, i)];
-        const dt = Math.max(1, last.t - prev.t);
-        const vx = (last.x - prev.x) / dt; // px per ms
-        const vy = (last.y - prev.y) / dt;
-        startInertia(vx * 16, vy * 16); // approximate px per frame
-      }
-      moveHistory = [];
-    };
-
-    const onTouchStart = (e) => {
-      if (!e.touches || e.touches.length === 0) return;
+    // Pointer-based dragging with RAF throttling for smoothness
+    const onPointerDown = (e) => {
+      draggingRef.current = true;
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+      moveHistoryRef.current = [{ t: Date.now(), x: e.clientX, y: e.clientY }];
       // cancel inertia
       if (inertiaAnimRef.current) { cancelAnimationFrame(inertiaAnimRef.current); inertiaAnimRef.current = null; }
+      try { canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    };
 
-      if (e.touches.length === 1) {
-        isTouchDragging = true;
-        const t0 = e.touches[0];
-        lastTouch = { x: t0.clientX, y: t0.clientY };
-        moveHistory = [{ t: Date.now(), x: t0.clientX, y: t0.clientY }];
-      } else if (e.touches.length === 2) {
-        isPinching = true;
-        const t0 = e.touches[0];
-        const t1 = e.touches[1];
-        initialPinchDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
-        initialPinchScale = scale;
-        // compute pinch center in map coordinates
-        const rect = canvas.getBoundingClientRect();
-        const cx = (t0.clientX + t1.clientX) / 2 - rect.left;
-        const cy = (t0.clientY + t1.clientY) / 2 - rect.top;
-        pinchCenterMap = {
-          x: (cx - offset.x - legendPadding - edgePadding) / scale,
-          y: (cy - offset.y - legendPadding - edgePadding) / scale,
-        };
+    const onPointerMove = (e) => {
+      if (!draggingRef.current) return;
+      const dx = e.clientX - lastPosRef.current.x;
+      const dy = e.clientY - lastPosRef.current.y;
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+      moveHistoryRef.current.push({ t: Date.now(), x: e.clientX, y: e.clientY });
+      if (moveHistoryRef.current.length > 10) moveHistoryRef.current.shift();
+
+      // update offsetRef and schedule RAF to set state (throttles rapid mousemove)
+      const next = clampOffset(offsetRef.current.x + dx, offsetRef.current.y + dy);
+      offsetRef.current = next;
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          setOffset(offsetRef.current);
+          rafRef.current = null;
+        });
       }
     };
-    const onTouchMove = (e) => {
-  if (isPinching && e.touches && e.touches.length === 2) {
-        // pinch-to-zoom
-        e.preventDefault();
-        const t0 = e.touches[0];
-        const t1 = e.touches[1];
-        const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
-        const factor = dist / Math.max(1, initialPinchDist);
-        const newScale = Math.min(3, Math.max(1, initialPinchScale * factor));
-        // keep pinchCenterMap at same screen position
-        const rect = canvas.getBoundingClientRect();
-        const cx = (t0.clientX + t1.clientX) / 2 - rect.left;
-        const cy = (t0.clientY + t1.clientY) / 2 - rect.top;
-        const newOffsetX = cx - (pinchCenterMap.x * newScale + legendPadding + edgePadding);
-        const newOffsetY = cy - (pinchCenterMap.y * newScale + legendPadding + edgePadding);
-        setScale(newScale);
-        setOffset(() => clampOffset(newOffsetX, newOffsetY, newScale));
-        return;
-      }
 
-      if (!isTouchDragging) return;
-      if (!e.touches || e.touches.length === 0) return;
-      // Prevent the page from scrolling while dragging the map
-      e.preventDefault();
-      const t = e.touches[0];
-      const dx = t.clientX - lastTouch.x;
-      const dy = t.clientY - lastTouch.y;
-      setOffset((prev) => clampOffset(prev.x + dx, prev.y + dy));
-      lastTouch = { x: t.clientX, y: t.clientY };
-      moveHistory.push({ t: Date.now(), x: t.clientX, y: t.clientY });
-      if (moveHistory.length > 10) moveHistory.shift();
-    };
-    const onTouchEnd = (e) => {
-      if (isPinching) {
-        // pinch finished
-        isPinching = false;
-        return;
-      }
-      isTouchDragging = false;
-      // compute inertia
-      if (moveHistory.length >= 2) {
-        const last = moveHistory[moveHistory.length - 1];
-        let i = moveHistory.length - 2;
-        while (i >= 0 && last.t - moveHistory[i].t < 30) i--;
-        const prev = moveHistory[Math.max(0, i)];
+    const onPointerUp = (e) => {
+      draggingRef.current = false;
+      try { canvas.releasePointerCapture && canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+      // compute inertia based on recent history
+      const mh = moveHistoryRef.current;
+      if (mh.length >= 2) {
+        const last = mh[mh.length - 1];
+        let i = mh.length - 2;
+        while (i >= 0 && last.t - mh[i].t < 30) i--;
+        const prev = mh[Math.max(0, i)];
         const dt = Math.max(1, last.t - prev.t);
         const vx = (last.x - prev.x) / dt; // px per ms
         const vy = (last.y - prev.y) / dt;
         startInertia(vx * 16, vy * 16);
       }
-      moveHistory = [];
+      moveHistoryRef.current = [];
     };
 
     const onWheel = (e) => {
@@ -286,28 +218,22 @@ export default function MapCanvas({
       });
     };
 
-  canvas.addEventListener("mousedown", onMouseDown);
-  canvas.addEventListener("mousemove", onMouseMove);
-  canvas.addEventListener("mouseup", onMouseUp);
-  canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
 
-  // touch event listeners (passive:false needed to call preventDefault)
-  canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-  canvas.addEventListener('touchend', onTouchEnd, { passive: true });
-
-  return () => {
-      canvas.removeEventListener("mousedown", onMouseDown);
-      canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("mouseup", onMouseUp);
-      canvas.removeEventListener("wheel", onWheel);
-
-      canvas.removeEventListener('touchstart', onTouchStart);
-      canvas.removeEventListener('touchmove', onTouchMove);
-      canvas.removeEventListener('touchend', onTouchEnd);
+    return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
+      canvas.removeEventListener('wheel', onWheel);
       if (inertiaAnimRef.current) cancelAnimationFrame(inertiaAnimRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [clampOffset, edgePadding, offset.x, offset.y, scale, startInertia]);
+  }, [clampOffset, startInertia, edgePadding]);
 
   // startInertia is defined above with useCallback
 
