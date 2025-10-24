@@ -10,6 +10,7 @@ export default function ResourceDisplay(props) {
   const api = useApi();
   const [resourceTypes, setResourceTypes] = useState([]); // array of {id,name}
   const [popBreakdown, setPopBreakdown] = useState(null); // { poor: {...}, burgess: {...}, patrician: {...} }
+  const [fetchedResources, setFetchedResources] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +45,21 @@ export default function ResourceDisplay(props) {
       }
     };
     fetchPop();
+    // If parent didn't supply resources (empty object), try to fetch them directly so the UI shows values immediately after login
+    const tryFetchResources = async () => {
+      try {
+        const keys = Object.keys(resources || {});
+        if ((keys.length === 0 || keys.every(k => resources[k] == null)) && entityId) {
+          const token = localStorage.getItem('authToken');
+          const r = await api.get(`/resources?entityId=${encodeURIComponent(entityId)}`, token);
+          if (!mounted) return;
+          if (r && r.resources) setFetchedResources(r.resources);
+        }
+      } catch (e) {
+        // ignore fetch errors; fallback to props.resources
+      }
+    };
+    tryFetchResources();
     return () => { mounted = false; };
   }, [api, entityId]);
 
@@ -58,13 +74,15 @@ export default function ResourceDisplay(props) {
   };
 
   // If we have resource types from the server, iterate them; otherwise fallback to keys in resources
-  const keysToRender = resourceTypes.length > 0 ? resourceTypes.map(rt => rt.name.toLowerCase()) : Object.keys(resources);
+  // prefer props.resources, fallback to fetchedResources if props are empty
+  const effectiveResources = (resources && Object.keys(resources).length > 0) ? resources : (fetchedResources || {});
+  const keysToRender = resourceTypes.length > 0 ? resourceTypes.map(rt => rt.name.toLowerCase()) : Object.keys(effectiveResources);
 
   keysToRender.forEach(k => {
     const cat = (categories && categories[k]) ? categories[k] : 'common';
     // ensure the category bucket exists (some categories may be dynamic)
     if (!grouped[cat]) grouped[cat] = {};
-    grouped[cat][k] = resources[k] || 0;
+    grouped[cat][k] = (effectiveResources && typeof effectiveResources[k] !== 'undefined') ? effectiveResources[k] : 0;
   });
 
   const renderCategory = (label, items) => (
